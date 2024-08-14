@@ -1,0 +1,11 @@
+*.swp
+/brutuspn/*.swp
+/brutuspn/src/*.swp
+/Initial_Conditions/*.swp
+
+*.swo
+/brutuspn/*.swo
+/brutuspn/src/*.swo
+/Initial_Conditions/*.swo
+
+/brutuspn/*.o
