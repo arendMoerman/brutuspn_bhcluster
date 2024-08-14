@@ -1,0 +1,10 @@
+Key 1: 10683953480316135686, Key 2: 6266670026863913445
+Semimajor: 33539.0289031 au
+Eccentricity: 0.999999626979384
+Inclination: -179.98160075523194
+Arg. of Periapsis: 82.30784179075559
+Ascending Node: -80.97165710756823
+True Anomaly: -26.878893469476715
+Distance: 58932.064395 au
+# Particles > 2pc away from merging IMBH: 35
+Peters tGW: 0.00909951645703 yr
