@@ -2,7 +2,7 @@
 
 // Function to read speed of light from "c.par". Called in constructor
 void Acceleration::set_cl() {
-    string file_path = "c.par";
+    string file_path = "./brutuspn/c.par";
     string value;
     ifstream inFile;
     mpreal c;
@@ -20,7 +20,7 @@ void Acceleration::set_cl() {
 
 // Function to read desired PN terms from "PN.order". Also called in constructor
 void Acceleration::set_PN() {
-    string file_path = "PN.order";
+    string file_path = "./brutuspn/PN.order";
     string value;
     ifstream inFile;
     vector<string> PN;

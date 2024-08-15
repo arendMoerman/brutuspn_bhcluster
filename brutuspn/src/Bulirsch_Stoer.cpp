@@ -52,7 +52,7 @@ bool Bulirsch_Stoer::integrate(Cluster &cl, mpreal &dt) {
       timestep = dt/k;
       c = c0;
       flag = step(c, timestep);
-      cout << "k = " << k << endl; 
+      //cout << "k = " << k << endl; 
       k += 2;
     }
   }  
@@ -90,7 +90,7 @@ bool Bulirsch_Stoer::integrate(Cluster &cl, mpreal &t0, mpreal &t1) {
       c = c0;
       for(int q=0; q<k; q++) {
         flag = step(c, timestep);
-        cout << "k = " << k << endl; 
+        //cout << "k = " << k << endl; 
         if(flag == false) break;
       }
       k += 2;

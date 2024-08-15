@@ -36,13 +36,27 @@ int main(int argc, char* argv[]) {
   int numDigits = (int)abs(log10( pow("2.0", -numBits) )).toLong();
 
   ///////////////////////////////////////////////////////// 
+  
+  string file_path = "./brutuspn/t.par";
+  string value;
+  ifstream inFile;
+  mpreal t_scale; // timescale in kyr
+  inFile.open(file_path);
+  if (inFile) {
+      while (inFile >> value) {
+          t_scale = value;
+      }
+  }
+  inFile.close();
 
-  string file_out = argv[1];
+  string outdir = "./outputs/";
 
-  mpreal t_begin  = argv[2];
-  mpreal t_end    = argv[3];
-  mpreal dt       = argv[4];
-  mpreal eta      = argv[5];
+  string file_out = outdir + argv[1];
+
+  mpreal t_begin  = argv[2] / t_scale;
+  mpreal t_end    = argv[3] / t_scale;
+  mpreal dt       = argv[4] / t_scale;
+  mpreal eta      = argv[5]; // This one is just given in nbody units by the shell script
 
   mpreal tolerance = argv[6];
 
@@ -63,7 +77,7 @@ int main(int argc, char* argv[]) {
   vector<mpreal> data0 = initializer.generate(N, config, par);
   vector<mpreal> data;
   for(int i=0; i<data0.size(); i++) {
-  //  cout << data0[i] << endl;
+    //cout << data0[i] << endl;
     data.push_back((mpreal)data0[i]);
   //  cout << data[data.size()-1] << endl;
   }
@@ -76,15 +90,15 @@ int main(int argc, char* argv[]) {
   string file_ddata = file_out + ".diag";
   string file_ldata = file_out + ".log";
 
-  ofstream ddata, ldata;
-  ddata.precision(numDigits);
+  ofstream ldata;
+  //ddata.precision(numDigits);
   ldata.precision(numDigits);
 
-  ddata.open(file_ddata.c_str());
-  if(!ddata) {
-    cerr << "Can't open " << file_ddata << "!" << endl;
-    return 0;
-  }
+  //ddata.open(file_ddata.c_str());
+  //if(!ddata) {
+  //  cerr << "Can't open " << file_ddata << "!" << endl;
+  //  return 0;
+  //}
 
   ldata.open(file_ldata.c_str());
   if(!ldata) {
@@ -110,18 +124,18 @@ int main(int argc, char* argv[]) {
   //data_handler.print(t0, N, t_cpu, data0);
 
   /////////////////////////////////////////////////////////
-
+  //cout << par[0] << endl;
   cerr << t << "/" << t_end << endl;
-  ofstream MyOutfile("output.txt");
+  ofstream MyOutfile(file_out + ".out");
   MyOut(N, sdata, MyOutfile);
   
   ofstream Energyfile;
-  Energyfile.open("energies.out");
+  Energyfile.open(file_out + ".energies");
   Energyfile << std::setprecision(numDigits) << t << " " << brutus.get_energy() << endl;
   
-  ofstream Enerfile;
-  Enerfile.open("Ener.out");
-  vector<mpreal> Ener;
+  //ofstream Enerfile;
+  //Enerfile.open("Ener.out");
+  //vector<mpreal> Ener;
   /*
   vector<mpreal> Ener = brutus.get_Ener();
   Enerfile << std::setprecision(numDigits) << t;
@@ -149,12 +163,12 @@ int main(int argc, char* argv[]) {
     Energyfile << std::setprecision(numDigits) << t << " " << brutus.get_energy() << endl;
     
     ///////////////// analysis stuff ////////////////
-    Ener = brutus.get_Ener();
-    Enerfile << std::setprecision(numDigits) << t;
-    for(vector<mpreal>::iterator e = Ener.begin(); e!=Ener.end(); ++e) {
-        Enerfile << " " << *e;
-    }
-    Enerfile << endl;
+    //Ener = brutus.get_Ener();
+    //Enerfile << std::setprecision(numDigits) << t;
+    //for(vector<mpreal>::iterator e = Ener.begin(); e!=Ener.end(); ++e) {
+    //    Enerfile << " " << *e;
+    //}
+    //Enerfile << endl;
     /////////////////////////////////////////////////
     
     cerr << t << "/" << t_end << endl;    
@@ -165,7 +179,8 @@ int main(int argc, char* argv[]) {
 
   }
   Energyfile.close();
-  Enerfile.close();
+  MyOutfile.close();
+  //Enerfile.close();
 
   sdata = brutus.get_data_string();
   mdata = brutus.get_data();
@@ -201,7 +216,7 @@ int main(int argc, char* argv[]) {
   cerr << "t_cpu       = " << t_cpu << endl;
   cerr << "x0          = " << sdata[1] << endl;
 
-  ddata.close();
+  //ddata.close();
   ldata.close();
   cerr << "Simulation finished!" << endl;
 

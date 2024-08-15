@@ -5,13 +5,14 @@ import matplotlib.pyplot as pt
 import numpy as np
 import argparse
 
-def PlotOutput(text):
+def PlotOutput():
     parser = argparse.ArgumentParser(description="Options for BrutusPN quicklook")
+    parser.add_argument("-n", "--name", type=str, help="Name of simulation result to plot.")
     parser.add_argument("-p", "--projection", type=int, default=0, help="Projection for plot. Choose 0 for xy, 1 for xz and 2 for yz. Default is 0.")
     args = parser.parse_args()
 
-    Arr = np.loadtxt(text)
-    enr = np.loadtxt("brutuspn/energies.out")
+    Arr = np.loadtxt(f"./outputs/{args.name}.out")
+    enr = np.loadtxt(f"./outputs/{args.name}.energies")
     
     N = int(Arr[0,7])
     T = int(len(Arr) / N)
@@ -68,6 +69,5 @@ def PlotOutput(text):
     
     
 if __name__ == "__main__":
-    
-    PlotOutput(text="brutuspn/output.txt")
+    PlotOutput()
     

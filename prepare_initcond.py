@@ -1,14 +1,16 @@
 import numpy as np
 import csv
+import os
 
 MsgrA = 4.297e6 #Msol, Mass scale (Mass from https://www.aanda.org/articles/aa/full_html/2023/09/aa47416-23/aa47416-23.html)
-RNUM = 0.5 # Distance scale in parsecs
+RNUM = 0.5 # Distance scale in units of parsecs
+MNUM = 1 # Mass scale in units of sgra* mass [Msol]
 
 MSOL = 1.9884e30  #kg
 PARSEC = 3.086e16 #meters
 G = 6.67430e-11 #m**3 / kg / (s**2)
 
-FM = MSOL * MsgrA
+FM = MSOL * MsgrA * MNUM
 FR = PARSEC * RNUM 
 
 VEL = np.sqrt(G * FM / FR) # m/s
@@ -17,6 +19,19 @@ TIME = FR / VEL / 60 / 60 / 24 / 365 / 1000 # kyr
 
 def convert(name):
     Nbodies = 0
+
+    # Write zeta to c.par
+    with open("./brutuspn/c.par", "w") as cpar:
+        cpar.write(str(ZETA))
+
+    # Write time scale to t.par, so that user does not have to give endtime and snapshot interval in nbody units, but instead in kyr
+    with open("./brutuspn/t.par", "w") as tpar:
+        tpar.write(str(TIME))
+
+    outdir = "./outputs/"
+    if not os.path.isdir(outdir):
+        os.makedirs(outdir)    
+
     with open(f'Initial_Conditions/{name}', newline='')  as csvfile, open(f"brutuspn/inputs/{name}.in", "w") as outfile:
         initreader = csv.reader(csvfile, delimiter=',')
         for idx, row in enumerate(initreader):
@@ -44,6 +59,7 @@ def convert(name):
                 if idx < (Nbodies + 2):
                     line_w += "\n"
                 outfile.write(line_w)
+
 
 if __name__ == "__main__":
     import os
