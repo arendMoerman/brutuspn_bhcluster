@@ -20,7 +20,7 @@ void Acceleration::set_cl() {
 
 // Function to read desired PN terms from "PN.order". Also called in constructor
 void Acceleration::set_PN() {
-    string file_path = "./brutuspn/PN.order";
+    string file_path = "./brutuspn/PN.par";
     string value;
     ifstream inFile;
     vector<string> PN;

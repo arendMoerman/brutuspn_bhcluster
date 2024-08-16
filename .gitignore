@@ -15,3 +15,5 @@ brutuspn/*.o
 outputs/*
 
 *.png
+
+brutuspn/*.par

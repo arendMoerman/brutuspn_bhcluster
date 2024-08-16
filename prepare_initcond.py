@@ -17,6 +17,8 @@ VEL = np.sqrt(G * FM / FR) # m/s
 ZETA = 299792458 / VEL
 TIME = FR / VEL / 60 / 60 / 24 / 365 / 1000 # kyr
 
+PNORDER = "1 1 1 1 0 0" # Order of PN terms: 1, 1xx, 2, 2.5, 3, 3.5 (3 and 3.5 PN are not well tested!). 0 means OFF, 1 means ON
+
 def convert(name):
     Nbodies = 0
 
@@ -27,6 +29,10 @@ def convert(name):
     # Write time scale to t.par, so that user does not have to give endtime and snapshot interval in nbody units, but instead in kyr
     with open("./brutuspn/t.par", "w") as tpar:
         tpar.write(str(TIME))
+    
+    # Write used PN terms to PN.par
+    with open("./brutuspn/PN.par", "w") as PNpar:
+        PNpar.write(PNORDER)
 
     outdir = "./outputs/"
     if not os.path.isdir(outdir):
