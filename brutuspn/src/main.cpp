@@ -58,7 +58,9 @@ int main(int argc, char* argv[]) {
   mpreal dt       = argv[4] / t_scale;
   mpreal eta      = argv[5]; // This one is just given in nbody units by the shell script
 
-  mpreal tolerance = argv[6];
+  int tol_power = atoi(argv[6]);
+
+  mpreal tolerance = pow(10, -1*tol_power);
 
   int nmax = atoi(argv[8]);
 
@@ -77,9 +79,7 @@ int main(int argc, char* argv[]) {
   vector<mpreal> data0 = initializer.generate(N, config, par);
   vector<mpreal> data;
   for(int i=0; i<data0.size(); i++) {
-    //cout << data0[i] << endl;
     data.push_back((mpreal)data0[i]);
-  //  cout << data[data.size()-1] << endl;
   }
   N = data.size()/7;
 
@@ -91,14 +91,7 @@ int main(int argc, char* argv[]) {
   string file_ldata = file_out + ".log";
 
   ofstream ldata;
-  //ddata.precision(numDigits);
   ldata.precision(numDigits);
-
-  //ddata.open(file_ddata.c_str());
-  //if(!ddata) {
-  //  cerr << "Can't open " << file_ddata << "!" << endl;
-  //  return 0;
-  //}
 
   ldata.open(file_ldata.c_str());
   if(!ldata) {
@@ -144,6 +137,7 @@ int main(int argc, char* argv[]) {
   }
   Enerfile << endl;
   */
+  float prog;
   while(t < t_end) {
     timer.start();
 
@@ -170,8 +164,12 @@ int main(int argc, char* argv[]) {
     //}
     //Enerfile << endl;
     /////////////////////////////////////////////////
-    
-    cerr << t << "/" << t_end << endl;    
+
+    prog = (float)(t / t_end) * 100;
+
+    printf("Progress: %f / 100\r", prog);
+    fflush(stdout);
+    //cerr << t << "/" << t_end << endl;    
 
     //if(sdata[1] == "nan") {
     //    break;

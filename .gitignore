@@ -3,9 +3,15 @@ brutuspn/*.swp
 brutuspn/src/*.swp
 Initial_Conditions/*.swp
 
+brutuspn/inputs/*
+
 *.swo
 brutuspn/*.swo
 brutuspn/src/*.swo
 Initial_Conditions/*.swo
 
 brutuspn/*.o
+
+outputs/*
+
+*.png

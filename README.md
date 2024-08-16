@@ -8,8 +8,9 @@
 
 - Build the code
 
-  1) Adjust the path to brutuspn_bhcluster/brutuspn/mpreal/mpreal.h in makefile
-  2) Type make
+  1) Adjust the path to ```brutuspn_bhcluster/brutuspn/mpreal/mpreal.h``` in makefile
+  2) Change working directory to ```/brutuspn/``` directory
+  3) Type ```make```
 
 # Instructions for starting a BrutusPN simulation for the BH cluster experiment
 

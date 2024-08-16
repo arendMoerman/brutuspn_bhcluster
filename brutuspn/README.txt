@@ -7,6 +7,7 @@
 - Build the code
 
   1) Adjust the path to mpreal.h in makefile
+  2) change working directory to the ```/brutuspn/``` folder
   2) Type make
 
 - Run the code:

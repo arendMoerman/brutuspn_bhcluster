@@ -31,8 +31,12 @@ def convert(name):
     outdir = "./outputs/"
     if not os.path.isdir(outdir):
         os.makedirs(outdir)    
+    
+    initdir = "./brutuspn/inputs/"
+    if not os.path.isdir(initdir):
+        os.makedirs(initdir)    
 
-    with open(f'Initial_Conditions/{name}', newline='')  as csvfile, open(f"brutuspn/inputs/{name}.in", "w") as outfile:
+    with open(f'Initial_Conditions/{name}', newline='')  as csvfile, open(f"{initdir}{name}.in", "w") as outfile:
         initreader = csv.reader(csvfile, delimiter=',')
         for idx, row in enumerate(initreader):
             if idx == 0:
