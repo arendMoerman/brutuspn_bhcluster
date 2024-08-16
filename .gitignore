@@ -10,6 +10,8 @@ brutuspn/*.swo
 brutuspn/src/*.swo
 Initial_Conditions/*.swo
 
+brutuspn/*.exe
+
 brutuspn/*.o
 
 outputs/*
