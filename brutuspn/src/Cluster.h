@@ -12,13 +12,23 @@ using namespace std;
 #ifndef __Cluster_h
 #define __Cluster_h
 
+struct mergerOut {
+    bool merged;
+    int idx0;
+    int idx1;
+};
+
 class Cluster : public Acceleration { 
 public:
     mpreal time, dt_last;
     Cluster() : Acceleration() {}
     
-    Cluster(vector<double> data);
-    Cluster(vector<mpreal> data);
+    Cluster(vector<double> data, mpreal r_merge);
+    Cluster(vector<mpreal> data, mpreal r_merge);
+
+    mpreal rmerge;
+
+    int merge_idx0, merge_idx1;
 
     vector<double> get_data_double();
     vector<mpreal> get_data();   
@@ -38,8 +48,7 @@ public:
     mpreal energies();
     vector<mpreal> get_Ener();
     
-    bool collisionDetection();
-    Star mergeBinary(const Star &si, const Star &sj);
+    void collisionDetection(mergerOut &out);
 };
 
 #endif

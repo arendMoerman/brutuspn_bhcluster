@@ -1,6 +1,6 @@
 #include "Cluster.h"
 
-Cluster::Cluster(vector<double> data) {
+Cluster::Cluster(vector<double> data, mpreal r_merge) {
     int N = data.size()/7;
     s.resize(N);
     mpreal m;
@@ -16,8 +16,9 @@ Cluster::Cluster(vector<double> data) {
         s[i] = Star(m, r, v);
     }
     this->time = 0;
+    this->rmerge = r_merge;
 }
-Cluster::Cluster(vector<mpreal> data) {
+Cluster::Cluster(vector<mpreal> data, mpreal r_merge) {
     int N = data.size()/7;
     s.resize(N);
     mpreal m;
@@ -33,6 +34,7 @@ Cluster::Cluster(vector<mpreal> data) {
         s[i] = Star(m, r, v);
     }
     this->time = 0;
+    this->rmerge = r_merge;
 }
 
 // This function sets the initial values for auxiliary vector w
@@ -246,86 +248,43 @@ vector<mpreal> Cluster::get_Ener() {
 }
 
 // Function to detect a collision for length scale = 1 parsec!!
-// Merges the two bodies after collision
-bool Cluster::collisionDetection() {
-    
-    // After a merger, check once again for mergers.
-    //merged:
-    
-    bool flag = false;
+void Cluster::collisionDetection(mergerOut &out) {
+    out.merged = false;
+    out.idx0 = -1;
+    out.idx1 = -1;
     
     mpreal dx, dy, dz;
     mpreal dr2;
     mpreal Rsi, Rsj;
 
-    mpreal l = "1"; // Set length scale in parsec
-    
     int N = s.size();
-    
-    // If everything has merged to 1 body, stop code 
-    if (N == 1) {
-        cout << "All bodies merged!" << endl;
-        exit(1);
-    }
 
     for (vector<Star>::iterator si = s.begin(); si != s.end()-1; ++si) {
         for (vector<Star>::iterator sj = si+1; sj != s.end(); ++sj) {
+
             dx = si->r[0] - sj->r[0];
             dy = si->r[1] - sj->r[1];
             dz = si->r[2] - sj->r[2];
             
             dr2 = dx*dx + dy*dy + dz*dz;
-            Rsi = "6"*si->m*c2*l; // Least stable circular orbit
-            Rsj = "6"*sj->m*c2*l; // Least stable circular orbit
+            Rsi = this->rmerge * "6"*si->m*c2; // Least stable circular orbit
+            Rsj = this->rmerge * "6"*sj->m*c2; // Least stable circular orbit
             
             if (dr2 < std::max(Rsi, Rsj)*std::max(Rsi, Rsj)) {
                 cout << "Collision detected!" << endl;
+                out.merged = true;
+                out.idx0 = distance(begin(s), si);
+                out.idx1 = distance(begin(s), sj);
                 
-                // Uncomment for easy exit //
-                exit(0);
-                
-                // Only merge if 2.5PN is ON. Otherwise merger procedure is INCORRECT
-                if(PN2_5) {
-                    flag = true;
-                
-                    Star new_body = mergeBinary(*si, *sj);
-
-                    // Erase j first since i is always smaller
-                    sj = s.erase(sj);
-                    si = s.erase(si);
-                    s.push_back(new_body);
-                
-                    return flag;
-                }
-                
-                else {exit(1);}
+                cout << this->merge_idx0 << " " << this->merge_idx1 << endl;
+                break;
             }
         }
+        if (out.merged) {
+            break;
+        }
     }
-    return flag;
 }
-
-// Merger handler. Called by collisionDetection
-// Note that this method is very crude and will not produce veracious solutions
-// Only qualitative results
-Star Cluster::mergeBinary(const Star &si, const Star &sj) {
-    Star new_body;
-    mpreal M;
-    
-    // Set merger mass
-    M = si.m + sj.m;
-    new_body.m = M;
-    
-    for(int k=0; k<3; k++) {
-        /// Use center of mass position. Set velocity to 0
-        new_body.r[k] = (si.m*si.r[k] + sj.m*sj.r[k]) / M;
-        new_body.v[k] = "0";
-        
-        // Reset auxiliary vector
-        new_body.w[k] = new_body.v[k];
-    }
-    return new_body;
-}        
 
 vector<double> Cluster::get_data_double() {
     vector<double> ddata;  

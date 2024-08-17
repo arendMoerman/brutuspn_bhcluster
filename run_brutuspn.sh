@@ -11,17 +11,20 @@ STARTTIME=0
 ENDTTIME=5
 
 # Snapshot interval in kyr
-DTSNAP=0.00001
+DTSNAP=0.001
 
 # Positive power of tolerance of Bulirsch-Stoer integration, converted internally to 10**-(power)
 EPS=10
+
+# Merge radius as fraction of R_ISCO
+RMERGE=1
 
 ################################################################################################
 # The following parameters usually do not have to be fine-tuned, they are ususally good as-is
 # BrutusPN executable
 EXEC="./brutuspn/main.exe"
 
-# Number of bytes for mpreal, given EPS
+# Number of bits for mpreal, given EPS
 LW=$((4 * EPS + 32)) 
 
 # Initial Bulirsch-Stoer timestep in nbody units
@@ -46,5 +49,5 @@ NBODIES=${LINE0[1]}
 MODE="file"
 echo "Running initial condition:" ${INITLOC} ${NBODIES}
 
-${EXEC} ${OUTFILE} ${STARTTIME} ${ENDTTIME} ${DTSNAP} ${ETA} ${EPS} ${LW} ${NMAX} ${NBODIES} ${MODE} ${INITLOC} 
+${EXEC} ${OUTFILE} ${STARTTIME} ${ENDTTIME} ${DTSNAP} ${ETA} ${EPS} ${LW} ${NMAX} ${NBODIES} ${RMERGE} ${MODE} ${INITLOC} 
 

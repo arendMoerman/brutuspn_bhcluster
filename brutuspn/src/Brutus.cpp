@@ -1,6 +1,6 @@
 #include "Brutus.h"
 
-Brutus::Brutus(vector<mpreal> &data) {
+Brutus::Brutus(vector<mpreal> &data, mpreal r_merge) {
   t = "0";
   this->data = data;
   N = data.size()/7;  
@@ -10,9 +10,9 @@ Brutus::Brutus(vector<mpreal> &data) {
 
   eta = "0.2";
 
-  setup();
+  setup(r_merge);
 }
-Brutus::Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance) {
+Brutus::Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, mpreal r_merge) {
   this->t = t;
   this->data = data;
   N = data.size()/7;  
@@ -22,9 +22,9 @@ Brutus::Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance) {
 
   eta = "0.2";
 
-  setup();
+  setup(r_merge);
 }
-Brutus::Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, int &numBits) {
+Brutus::Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, int &numBits, mpreal r_merge) {
   this->t = t;
   this->data = data;
   N = data.size()/7;  
@@ -34,9 +34,9 @@ Brutus::Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, int &numBits)
 
   eta = "0.2";
 
-  setup();
+  setup(r_merge);
 }
-Brutus::Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, int &numBits, mpreal &eta) {
+Brutus::Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, int &numBits, mpreal &eta, mpreal r_merge) {
   this->t = t;
   this->data = data;
   N = data.size()/7;  
@@ -46,9 +46,9 @@ Brutus::Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, int &numBits,
 
   this->eta = eta;
 
-  setup();
+  setup(r_merge);
 }
-Brutus::Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, int &numBits, mpreal &eta, int &nmax) {
+Brutus::Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, int &numBits, mpreal &eta, int &nmax, mpreal r_merge) {
   this->t = t;
   this->data = data;
   N = data.size()/7;  
@@ -58,30 +58,29 @@ Brutus::Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, int &numBits,
 
   this->eta = eta;
 
-  setup(nmax);
+  setup(nmax, r_merge);
 }
 
 mpreal Brutus::get_eta() {
   return eta;
 }
 
-void Brutus::setup() {
-  Cluster c(data);
+void Brutus::setup(mpreal r_merge) {
+  Cluster c(data, r_merge);
   cl = c;
 
   Bulirsch_Stoer b(tolerance);
   bs = b;
 }
-void Brutus::setup(int nmax) {
-  Cluster c(data);
+void Brutus::setup(int nmax, mpreal r_merge) {
+  Cluster c(data, r_merge);
   cl = c;
 
   Bulirsch_Stoer b(tolerance, nmax, 128);
   bs = b;
 }
 
-bool Brutus::evolve(mpreal t_end) {
-  bool merge;
+void Brutus::evolve(mpreal t_end, mergerOut &merge) {
   while (t<t_end) {
     cl.calcAcceleration_dt();
 
@@ -91,11 +90,10 @@ bool Brutus::evolve(mpreal t_end) {
     t += dt;
     if(t > t_end) t = t_end;
     
-    merge = cl.collisionDetection();
-    if(merge) {
-        N--;
+    cl.collisionDetection(merge);
+    if(merge.merged) {
         this->data = cl.get_data();
-        return merge;
+        break;
     }
 
     bool converged = bs.integrate(cl, t0, t);
@@ -106,7 +104,6 @@ bool Brutus::evolve(mpreal t_end) {
     }
   }
   this->data = cl.get_data();
-  return merge;
 }
 
 void Brutus::reverse_velocities() {

@@ -65,9 +65,12 @@ int main(int argc, char* argv[]) {
   int nmax = atoi(argv[8]);
 
   int N		= atoi(argv[9]);
-  string config = argv[10];
+
+  mpreal r_merge = argv[10];
+
+  string config = argv[11];
   vector<string> par;
-  for(int i=11; i<argc; i++) {
+  for(int i=12; i<argc; i++) {
     par.push_back(argv[i]);
   }
 
@@ -102,7 +105,7 @@ int main(int argc, char* argv[]) {
   /////////////////////////////////////////////////////////
 
   mpreal t = t_begin;
-  Brutus brutus(t_begin, data, tolerance, numBits, eta, nmax);
+  Brutus brutus(t_begin, data, tolerance, numBits, eta, nmax, r_merge);
 
   Timer timer;
   double t_cpu = 0;
@@ -138,21 +141,24 @@ int main(int argc, char* argv[]) {
   Enerfile << endl;
   */
   float prog;
+  mergerOut merge;
+
   while(t < t_end) {
     timer.start();
 
     t += dt;
     if(t > t_end) t = t_end;
 
-    bool merge = brutus.evolve(t);
-    if(merge) {N--;}
+    brutus.evolve(t, merge);
+    if(merge.merged) {
+        break;
+    }
 
     timer.stop();
     t_cpu += timer.get();
 
     sdata = brutus.get_data_string();
     mdata = brutus.get_data();
-    //data_handler.print(t, N, t_cpu, mdata);
     MyOut(N, sdata, MyOutfile);
     Energyfile << std::setprecision(numDigits) << t << " " << brutus.get_energy() << endl;
     
@@ -187,7 +193,6 @@ int main(int argc, char* argv[]) {
   /////////////////////////////////////////////////////////
 
   ldata << "N           = " << N << endl;
-  ldata << "config      = " << config << endl;
   ldata << "param       = ";
   for(int i=0; i<par.size(); i++) ldata << par[i] << " ";
   ldata << endl;
@@ -198,10 +203,9 @@ int main(int argc, char* argv[]) {
   ldata << "e           = " << tolerance << endl;
   ldata << "Lw          = " << numBits << endl;
   ldata << "t_cpu       = " << t_cpu << endl;
-  ldata << "x0          = " << sdata[1] << endl;
+  ldata << "mergers     = " << merge.idx0 << " " << merge.idx1 << endl;
 
   cerr << "N           = " << N << endl;
-  cerr << "config      = " << config << endl;
   cerr << "param       = ";
   for(int i=0; i<par.size(); i++) cerr << par[i] << " ";
   cerr << endl;
@@ -212,7 +216,7 @@ int main(int argc, char* argv[]) {
   cerr << "e           = " << tolerance << endl;
   cerr << "Lw          = " << numBits << endl;
   cerr << "t_cpu       = " << t_cpu << endl;
-  cerr << "x0          = " << sdata[1] << endl;
+  cerr << "mergers     = " << merge.idx0 << " " << merge.idx1 << endl;
 
   //ddata.close();
   ldata.close();

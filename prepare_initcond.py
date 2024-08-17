@@ -33,7 +33,7 @@ def convert(name):
     # Write used PN terms to PN.par
     with open("./brutuspn/PN.par", "w") as PNpar:
         PNpar.write(PNORDER)
-
+    
     outdir = "./outputs/"
     if not os.path.isdir(outdir):
         os.makedirs(outdir)    

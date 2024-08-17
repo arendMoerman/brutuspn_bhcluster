@@ -25,18 +25,18 @@ class Brutus {
   vector<mpreal> get_dt_step();
   vector<mpreal> get_tcpu_step();
 
-  Brutus(vector<mpreal> &data);
-  Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance);
-  Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, int &numBits);
-  Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, int &numBits, mpreal &eta);
-  Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, int &numBits, mpreal &eta, int &nmax);
+  Brutus(vector<mpreal> &data, mpreal r_merge);
+  Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, mpreal r_merge);
+  Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, int &numBits, mpreal r_merge);
+  Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, int &numBits, mpreal &eta, mpreal r_merge);
+  Brutus(mpreal &t, vector<mpreal> &data, mpreal &tolerance, int &numBits, mpreal &eta, int &nmax, mpreal r_merge);
 
   mpreal get_eta();
 
-  void setup();
-  void setup(int nmax);
+  void setup(mpreal r_merge);
+  void setup(int nmax, mpreal r_merge);
 
-  bool evolve(mpreal t_end);
+  void evolve(mpreal t_end, mergerOut &merge);
   void reverse_velocities();
 
   mpreal get_t();
