@@ -8,6 +8,7 @@ using namespace std;
 #include <cmath>
 #include <numeric> 
 #include <cstdlib>
+#include <array>
 
 #include "mpreal.h"
 using namespace mpfr;
@@ -20,10 +21,14 @@ using namespace mpfr;
 
 #include "Brutus.h"
 
-void MyOut(int &N, vector<string> &data, ofstream &out) {
+void MyOut(int &N, vector<string> &data, ofstream &out, vector<mpreal> &mrvt) {
+    int scale_idx;
     for(int i=0; i<N; i++) {
+        scale_idx = 0;
         for(int j=0; j<7; j++) {
-            out << data[i*7+j] << " ";
+            if(j > 0) {scale_idx=1;}
+            if(j > 3) {scale_idx=2;}
+            out << data[i*7+j]*mrvt[scale_idx] << " ";
         }
         out << N << endl;
     }
@@ -36,15 +41,16 @@ int main(int argc, char* argv[]) {
   int numDigits = (int)abs(log10( pow("2.0", -numBits) )).toLong();
 
   ///////////////////////////////////////////////////////// 
-  
-  string file_path = "./brutuspn/t.par";
+
+  vector<mpreal> mrvt;
+
+  string file_path = "./brutuspn/mrvt.par";
   string value;
   ifstream inFile;
-  mpreal t_scale; // timescale in kyr
   inFile.open(file_path);
   if (inFile) {
       while (inFile >> value) {
-          t_scale = value;
+          mrvt.push_back(value);
       }
   }
   inFile.close();
@@ -53,9 +59,9 @@ int main(int argc, char* argv[]) {
 
   string file_out = outdir + argv[1];
 
-  mpreal t_begin  = argv[2] / t_scale;
-  mpreal t_end    = argv[3] / t_scale;
-  mpreal dt       = argv[4] / t_scale;
+  mpreal t_begin  = argv[2] / mrvt[3];
+  mpreal t_end    = argv[3] / mrvt[3];
+  mpreal dt       = argv[4] / mrvt[3];
   mpreal eta      = argv[5]; // This one is just given in nbody units by the shell script
 
   int tol_power = atoi(argv[6]);
@@ -121,13 +127,13 @@ int main(int argc, char* argv[]) {
 
   /////////////////////////////////////////////////////////
   //cout << par[0] << endl;
-  cerr << t << "/" << t_end << endl;
+  //cerr << t << "/" << t_end << endl;
   ofstream MyOutfile(file_out + ".out");
-  MyOut(N, sdata, MyOutfile);
+  MyOut(N, sdata, MyOutfile, mrvt);
   
   ofstream Energyfile;
   Energyfile.open(file_out + ".energies");
-  Energyfile << std::setprecision(numDigits) << t << " " << brutus.get_energy() << endl;
+  Energyfile << std::setprecision(numDigits) << t*mrvt[3] << " " << brutus.get_energy() << endl;
   
   //ofstream Enerfile;
   //Enerfile.open("Ener.out");
@@ -159,8 +165,8 @@ int main(int argc, char* argv[]) {
 
     sdata = brutus.get_data_string();
     mdata = brutus.get_data();
-    MyOut(N, sdata, MyOutfile);
-    Energyfile << std::setprecision(numDigits) << t << " " << brutus.get_energy() << endl;
+    MyOut(N, sdata, MyOutfile, mrvt);
+    Energyfile << std::setprecision(numDigits) << t*mrvt[3] << " " << brutus.get_energy() << endl;
     
     ///////////////// analysis stuff ////////////////
     //Ener = brutus.get_Ener();
@@ -224,8 +230,4 @@ int main(int argc, char* argv[]) {
 
   return 0;
 }
-
-
-
-    
 

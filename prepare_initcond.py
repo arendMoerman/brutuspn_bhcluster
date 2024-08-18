@@ -25,10 +25,13 @@ def convert(name):
     # Write zeta to c.par
     with open("./brutuspn/c.par", "w") as cpar:
         cpar.write(str(ZETA))
-
-    # Write time scale to t.par, so that user does not have to give endtime and snapshot interval in nbody units, but instead in kyr
-    with open("./brutuspn/t.par", "w") as tpar:
-        tpar.write(str(TIME))
+    
+    # Write zeta to c.par
+    with open("./brutuspn/mrvt.par", "w") as par:
+        par.write(str(FM)+"\n")
+        par.write(str(FR)+"\n")
+        par.write(str(VEL)+"\n")
+        par.write(str(TIME))
     
     # Write used PN terms to PN.par
     with open("./brutuspn/PN.par", "w") as PNpar:

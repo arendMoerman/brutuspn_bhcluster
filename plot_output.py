@@ -51,8 +51,8 @@ def PlotOutput():
 
     coord_labels = ["x", "y", "z"]
 
-    ax[0].set_xlabel(f'{coord_labels[idx_x]} [pc]')
-    ax[0].set_ylabel(f'{coord_labels[idx_y]} [pc]')
+    ax[0].set_xlabel(f'{coord_labels[idx_x]} [m]')
+    ax[0].set_ylabel(f'{coord_labels[idx_y]} [m]')
     ax[0].set_aspect("equal")
     ax[0].tick_params(which="both", direction="in")
     #ax.legend(frameon=False, prop={'size': 10})
@@ -63,7 +63,7 @@ def PlotOutput():
 
     ax[1].plot(enr[:,0], err_e)
     ax[1].tick_params(which="both", direction="in")
-    ax[1].set_xlabel("time [N-body]")
+    ax[1].set_xlabel("time [kyr]")
     ax[1].set_ylabel(r"$\Delta_{10} E$")
     pt.show()
     

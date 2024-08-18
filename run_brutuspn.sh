@@ -11,7 +11,7 @@ STARTTIME=0
 ENDTTIME=5
 
 # Snapshot interval in kyr
-DTSNAP=0.001
+DTSNAP=0.0001
 
 # Positive power of tolerance of Bulirsch-Stoer integration, converted internally to 10**-(power)
 EPS=10
