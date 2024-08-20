@@ -42,7 +42,7 @@ def PlotOutput():
             R[i, 1, k] = Arr[k*N+i,1]
             R[i, 2, k] = Arr[k*N+i,2]
     
-    fig, ax = pt.subplots(1, 2, width_ratios=[1, 1], height_ratios=[1])
+    fig, ax = pt.subplots(1, 2)#, width_ratios=[1, 1], height_ratios=[1])
     for i in range(N):    
         ax[0].plot(R[i,idx_x],R[i,idx_y], linewidth=1, label=('m={}'.format(round(m[i]))))
     
