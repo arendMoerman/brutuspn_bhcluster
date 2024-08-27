@@ -34,10 +34,9 @@ def PlotOutput():
     elif args.projection == 2:
         idx_x = 1
         idx_y = 2
-
+        
     for i in range(N):
         for k in range(T):
-
             R[i, 0, k] = Arr[k*N+i,0]
             R[i, 1, k] = Arr[k*N+i,1]
             R[i, 2, k] = Arr[k*N+i,2]

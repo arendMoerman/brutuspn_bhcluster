@@ -21,7 +21,7 @@ class Plotters(object):
     """Class to plot simulation results"""
     def __init__(self):
         self.format_plot = PlotterSetup()
-        self.cmap = plt.get_cmap('Blues')
+        self.cmap = plt.get_cmap('viridis')
         
         self.tend = 2.545100089670521 | units.kyr
         self.dt = 0.1 | units.yr
@@ -107,7 +107,21 @@ class Plotters(object):
                         self.merger_ecc[array_idx].append(kepler_elements[3])
                     
                     else:
-                        offset = min(200, sim_dt)
+                        final_dt_1 = (sim_dt - 1)*sim_pop + merger_idx_1
+                        final_dt_2 = (sim_dt - 1)*sim_pop + merger_idx_2
+                        
+                        p1 = data_file[final_dt_1, :]
+                        p2 = data_file[final_dt_2, :]
+                        kepler_elements, binary = self.extract_orbital_parameters(p1, p2)
+                        eccentricity = kepler_elements[3]
+                        
+                        if eccentricity < 0.99:
+                            offset = sim_dt
+                        if eccentricity < 0.999:
+                            offset = min(1000, sim_dt)
+                        else:
+                            offset = min(50, sim_dt)
+                        
                         for dt in range(offset):
                             merger1_row = (sim_dt-offset+dt)*sim_pop + merger_idx_1
                             merger2_row = (sim_dt-offset+dt)*sim_pop + merger_idx_2
@@ -128,8 +142,6 @@ class Plotters(object):
                             self.GW_freq[array_idx].append(freq_val)
                             self.GW_strain[array_idx].append(strain_val)
                             self.merger_fno[array_idx].append(file_no)
-                            
-                        print(eccentricity)
         
     def final_ecc_CDF(self):
         self.extract_merger_parameters(final_dt=True)
@@ -170,10 +182,14 @@ class Plotters(object):
         lisa = li.LISA() 
         x_temp = np.linspace(1e-5, 1, 1000)
         Sn = lisa.Sn(x_temp)
+        LISA_h = np.log10(np.sqrt(x_temp*Sn))
+        LISA_f = np.log10(x_temp)
         
         Ares = np.load(os.path.join(os.getcwd(), 'plotters/SGWBProbe/files/S_h_muAres_nofgs.npz'))
         Ares_freq = Ares['x']
         Ares_strain = Ares['y']
+        Ares_h = np.log10(np.sqrt(Ares_freq*Ares_strain))
+        Ares_f = np.log10(Ares_freq)
 
         fig = plt.figure(figsize=(9,7))
         gs = fig.add_gridspec(2, 2,  width_ratios=(4, 2), height_ratios=(2, 4),
@@ -183,14 +199,19 @@ class Plotters(object):
         ax = fig.add_subplot(gs[1, 0])
         ax1 = fig.add_subplot(gs[0, 0], sharex=ax)
         ax2 = fig.add_subplot(gs[1, 1], sharey=ax)
+        ax3 = fig.add_subplot(gs[0, 1], frame_on=False)
+        ax3.axis('off')
+        
         ax.set_xlabel(r"$\log_{10} f$ [Hz]", fontsize=self.format_plot.font_size)
         ax.set_ylabel(r"$\log_{10} h$", fontsize=self.format_plot.font_size)
-        ax1.set_ylabel(r"$\log_{10} h$", fontsize=self.format_plot.font_size)
-        ax2.set_xlabel(r"$\log_{10} f$ [Hz]", fontsize=self.format_plot.font_size)
-        ax.plot(np.log10(x_temp), np.log10(np.sqrt(x_temp*Sn)), color='black', linewidth=1.5)
-        ax.plot(np.log10(Ares_freq), np.log10(np.sqrt(Ares_freq*Ares_strain)), color='black', linewidth=1.5)
-        ax.text(-1, -20.5, r'$\mu$Ares', fontsize=self.format_plot.font_size, rotation=30, color='black')
-        ax.text(-1, -19, 'LISA',fontsize=self.format_plot.font_size, rotation=30, color='black')
+        ax1.set_ylabel(r"$\rho/\rho_{\rm max}$", fontsize=self.format_plot.font_size)
+        ax2.set_xlabel(r"$\rho/\rho_{\rm max}$", fontsize=self.format_plot.font_size)
+        ax.plot(LISA_f, LISA_h, color='black', linewidth=1.5)
+        ax.plot(Ares_f, Ares_h, color='black', linewidth=1.5)
+        ax.fill_between(LISA_f, LISA_h, alpha=0.1, color="black")
+        ax.fill_between(Ares_f, Ares_h, alpha=0.1, color="black")
+        ax.text(-1, -20.3, r'$\mu$Ares', fontsize=self.format_plot.font_size, rotation=30, color='black')
+        ax.text(-1, -19.1, 'LISA',fontsize=self.format_plot.font_size, rotation=30, color='black')
         
         norm = ecc_normalise
         sm_colour = plt.cm.ScalarMappable(cmap=self.cmap, norm=norm)
@@ -215,17 +236,20 @@ class Plotters(object):
             
             for sim in np.unique(self.merger_fno[i]):
                 indices = np.where(np.array(self.merger_fno[i]) == sim)[0]
-                ecc0 = np.asarray([np.log10(ecc_vals[indices[-1]]) for i in indices])
+                ecc = np.log10(ecc_vals[indices])
                 edge_colour = edge_colors[i]
                 
-                scatter = ax.scatter(np.log10(freq[indices]), np.log10(strain[indices]), 
-                                     c=ecc0, norm=ecc_normalise, cmap=self.cmap, s=10,
-                                     )
-                ax.scatter(np.log10(freq[indices][-1]), np.log10(strain[indices][-1]), 
-                           c=ecc0[-1], norm=ecc_normalise, marker="X", s=100, 
-                           edgecolors=edge_colour, linewidth=1.5, cmap=self.cmap
+                ax.scatter(np.log10(freq[indices]), np.log10(strain[indices]), 
+                           c=ecc, norm=ecc_normalise, cmap=self.cmap, s=10,
+                           zorder=1
                            )
-                ax.plot(np.log10(freq[indices]), np.log10(strain[indices]), color="black", alpha=0.2)
+                ax.plot(np.log10(freq[indices]), np.log10(strain[indices]), 
+                        color="black", alpha=0.2, zorder=2
+                        )
+                ax.scatter(np.log10(freq[indices.max()]), np.log10(strain[indices.max()]), 
+                           c=edge_colour, marker="X", s=35, linewidth=0.75, zorder=3,
+                           edgecolors="black"
+                           )
                 
             all_freq = np.concatenate((all_freq, freq), axis=None)
             all_strain = np.concatenate((all_strain, strain), axis=None)
@@ -243,20 +267,20 @@ class Plotters(object):
         ax2.fill_between(kde.density, kde.support, alpha=0.4, color="black")
             
         # Eccentricity colours
-        color_bar = plt.colorbar(sm_colour, ax=ax1, orientation='vertical')
-        color_bar.set_label(r"$\log_{10}(1-e(t_{\rm coll}))$", fontsize=self.format_plot.font_size)
+        color_bar = plt.colorbar(sm_colour, ax=ax3, pad=0.5)
+        color_bar.set_label(r"$\log_{10}(1-e(t))$", fontsize=self.format_plot.font_size)
 
         # Population colours
-        edge_color_bar = plt.colorbar(sm_edge, ax=ax1, orientation='vertical')
+        edge_color_bar = plt.colorbar(sm_edge, ax=ax3, pad=0.3)
         edge_color_bar.set_label(r"$N$", fontsize=self.format_plot.font_size)        
         ticks = [0, 1, 2, 3, 4, 5, 6]  # Positions for each color category
         tick_labels = ['10', '15', '20', '25', '30', '35', '40']  # Custom labels
         edge_color_bar.set_ticks(ticks)
         edge_color_bar.set_ticklabels(tick_labels)
         
-        ax.set_ylim(-26.9, -17.02)
+        ax.set_ylim(-25.9, -17.02)
         ax1.set_ylim(0, 1.02)
-        ax2.set_ylim(-26.9, -17.02)
+        ax2.set_ylim(-25.9, -17.02)
         ax.set_xlim(-3.98, 0.2)
         ax1.set_xlim(-3.98, 0.2)
         ax2.set_xlim(0, 1.02)
@@ -334,6 +358,6 @@ class Plotters(object):
         print(f"Initial conditions had {nhead} head-ons mergers")
         
 dd = Plotters()
-dd.final_ecc_CDF()
+# dd.final_ecc_CDF()
 # dd.tGW_comparison()
 dd.frequency_strain()
