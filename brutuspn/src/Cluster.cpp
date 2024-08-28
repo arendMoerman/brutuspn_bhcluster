@@ -89,14 +89,28 @@ void Cluster::updateVelocities(mpreal dt) {
 
 // Step the cluster using Auxiliary Vector Algorithm by Mikkola & Hellstrom
 void Cluster::step(mpreal &dt) {
+    // Store acceleration at beginning of step, before it is assigned to zero and updated
+    for (vector<Star>::iterator si = s.begin(); si != s.end(); ++si) {
+        for(int k=0; k<3; k++) {
+            a0[k] = si->a[k];
+        }
+    }
+    
     updatePositions(dt);
-    calcAcceleration(dt);
+    calcAcceleration();
     updateAuxiliary(dt);
-    calcAcceleration(dt);
+    calcAcceleration();
     updateVelocities(dt);
-    calcAcceleration(dt);
+    calcAcceleration();
     updateAuxiliary2(dt);
     updatePositions(dt);
+    
+    // Now calculate jerk for each body
+    for (vector<Star>::iterator si = s.begin(); si != s.end(); ++si) {
+        for(int k=0; k<3; k++) {
+            si->jerk[k] = (si->a[k] - a0[k]) / dt;
+        }
+    }
 }
 
 // Here, the PN contributions up to 3PN are calculated.

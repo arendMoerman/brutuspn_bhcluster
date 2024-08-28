@@ -242,21 +242,13 @@ void Acceleration::get_bary() {
 }
 
 // Here the acceleration used during Bulirsch-Stoer steps
-void Acceleration::calcAcceleration(mpreal dt) {
+void Acceleration::calcAcceleration() {
     array<mpreal, 3> vi;
     array<mpreal, 3> dr;
     array<mpreal, 3> dv;
     array<mpreal, 3> da;
-    array<mpreal, 3> a0;
     mpreal dr2 = "0";
     
-    // Store acceleration at beginning of step, before it is assigned to zero and updated
-    for (vector<Star>::iterator si = s.begin(); si != s.end(); ++si) {
-        for(int k=0; k<3; k++) {
-            a0[k] = si->a[k];
-        }
-    }
-
     for (vector<Star>::iterator si = s.begin(); si != s.end(); ++si) {
         si->a.fill("0");
     }
@@ -301,14 +293,6 @@ void Acceleration::calcAcceleration(mpreal dt) {
                 da[k] -= mj*apreij*dr[k];
                 si->a[k] += da[k];
             }
-        }
-    }
-    
-    // Now calculate jerk for each body
-    for (vector<Star>::iterator si = s.begin(); si != s.end(); ++si) {
-        for(int k=0; k<3; k++) {
-            si->jerk[k] = (si->a[k] - a0[k]) / dt;
-            //cout << si->jerk[k] << endl;
         }
     }
 }
