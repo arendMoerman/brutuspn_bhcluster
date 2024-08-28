@@ -46,3 +46,9 @@ class PlotterSetup(object):
         x = np.sort(data)
         y = np.linspace(0, 1, len(x))
         return x, y
+    
+    def kde_maker(self, data):
+        """Function to make a KDE of the data"""
+        kde = sm.nonparametric.KDEUnivariate(data).fit()
+        kde.density /= kde.density.max()
+        return kde.support, kde.density

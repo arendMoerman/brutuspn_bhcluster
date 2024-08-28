@@ -54,7 +54,6 @@ def gw_cfreq_semi(ecc_arr, freq_val, m1, m2):
     Function to get constant frequency curves (Eqn. 43 of Samsing et al. 2014).
     LISA (1e-2 Hz) peak sensitivity with range 1e-5<f<1 [https://lisa.nasa.gov/]
     muAres (1e-3 Hz) peak sensitivity with range 1e-7<f<1 [arXiv:1908.11391]
-    
     Inputs:
     ecc_arr:  The eccentricity array
     freq_val: The constant frequency wishing to plot
@@ -134,3 +133,48 @@ def tGW_peters(m1, m2, semi, ecc):
     total_mass = m1 + m2
     tgw = (5/256)*(constants.c)**5/(constants.G**3)*(semi**4*(1-ecc**2)**3.5)/(reduced_mass*total_mass**2)
     return tgw
+
+def peters_orb_param_evolution(semi_major, eccentricity, mass1, mass2, dt, sim_len):
+    """Track the predicted orbital parameter evolution of a binary system
+    Uses equation 5.6 and 5.7 of Peters (1964) to calculate the semi-major axis 
+    and eccentricity of the system.
+    Inputs:  
+    semi_major:    The initial semi-major axis of the binary system
+    eccentricity:  The initial eccentricity of the binary system
+    mass1:         The mass of the primary object
+    mass2:         The mass of the secondary object
+    dt:            The simulation timestep
+    sim_len:       The number of iterations in simulation
+    """
+    system_mass = mass1 + mass2
+    predicted_sem_evol = [ ]
+    predicted_ecc_evol = [ ]
+    
+    rperi = semi_major*(1-eccentricity)
+    iteration = 0
+    while rperi > (6*constants.G*system_mass)/(constants.c**2) \
+        and iteration < sim_len:
+            if not (predicted_sem_evol and predicted_ecc_evol):
+                predicted_sem_evol.append(semi_major.value_in(units.au))
+                predicted_ecc_evol.append(1-eccentricity)
+                
+            else:
+                coefficient = (constants.G**3*mass1*mass2*system_mass)/(constants.c**5)
+                ecc_func = (1+(73/24)*eccentricity**2+(37/96)*eccentricity**4)
+                
+                da = -(64/5)*coefficient/(semi_major**3*(1-eccentricity**2)**(7./2.))*ecc_func
+                de = -(304/15)*eccentricity*coefficient/(semi_major**4*(1-eccentricity**2)**(5./2.))*(1+(121/304)*eccentricity**2)
+                
+                semi_major += da*dt
+                eccentricity += de*dt
+                rperi = semi_major*(1-eccentricity)
+                
+                predicted_sem_evol.append(semi_major.value_in(units.au))
+                predicted_ecc_evol.append(1-eccentricity)
+        
+            iteration += 1
+            
+    return predicted_sem_evol, predicted_ecc_evol
+
+def power_law_fit(x, slope, alpha, yint):
+    return slope*x**alpha+yint

@@ -37,20 +37,35 @@ class Plotters(object):
             self.initial_files.append(initial_summary)  
 
         self.N = None
-        # Merging parameters
-        self.sim_steps = [[ ] for i in range(7)]  
-        self.merger_ecc = [[ ] for i in range(7)]  
-        self.merger_sem = [[ ] for i in range(7)]  
-        self.merger_type = [[ ] for i in range(7)]
-        self.merger_fno = [[ ] for i in range(7)]
+        self.initialise_data_storage()
         
-        # All binary interactions
-        self.semi_major = [[ ] for i in range(7)]  
-        self.eccentricity = [[ ] for i in range(7)]
-        
-        # GW properties
-        self.GW_freq = [[ ] for i in range(7)]
-        self.GW_strain = [[ ] for i in range(7)]
+    def initialise_data_storage(self):
+        """Initialise data storage arrays"""    
+        data_categories = {
+            "merging_parameters": [
+                 "sim_steps", "initial_merger_ecc", 
+                 "initial_merger_sem", "final_merger_sem", 
+                 "final_merger_ecc", "merger_type", 
+                 "merger_fno"
+                 ],
+            "final_orbital_parameters": [
+                "semi_major", "eccentricity"
+            ],
+            "all_orbital_parameters": [
+                "semi_major_deviation", "eccentricity_deviation",
+                "maximum_iterations"
+            ],
+            "gw_properties": [
+                "GW_freq", "GW_strain"
+            ]
+        }
+
+        self.data_storage = {}
+
+        # Initialize all arrays in the storage dictionary
+        for category, fields in data_categories.items():
+            for field in fields:
+                self.data_storage[field] = [[] for _ in range(7)]
         
     def extract_orbital_parameters(self, p1, p2):
         """Extract the orbital parameters of the binary system"""
@@ -67,11 +82,7 @@ class Plotters(object):
         
         return kepler_elements, binary
     
-    def extract_merger_parameters(self, final_dt):
-        """Save orbital parameters between merging particles at final dt
-        Inputs:
-        final_dt:  Boolean to extract the final dt or final 100 snapshots
-        """
+    def process_output_file(self, final_dt=True):
         file_no = 0
         for data_file, output in zip(self.env_files, self.log_files):
             if os.path.getsize(output) > 0:
@@ -93,58 +104,134 @@ class Plotters(object):
                     
                     sim_pop = int(data_values[0].split("=")[1])
                     sim_dt = int(len(data_file) / sim_pop)
+                    array_idx = sim_pop // 5 - 2
                     
-                    if (final_dt):
-                        merger1_row = (sim_dt-1)*sim_pop + merger_idx_1
-                        merger2_row = (sim_dt-1)*sim_pop + merger_idx_2
-                        array_idx = sim_pop // 5 - 2
-                        
-                        p1 = data_file[merger1_row, :]
-                        p2 = data_file[merger2_row, :]
-                        kepler_elements, dummy = self.extract_orbital_parameters(p1, p2)
-                        
-                        self.merger_sem[array_idx].append(kepler_elements[2].value_in(units.au))
-                        self.merger_ecc[array_idx].append(kepler_elements[3])
-                    
-                    else:
-                        final_dt_1 = (sim_dt - 1)*sim_pop + merger_idx_1
-                        final_dt_2 = (sim_dt - 1)*sim_pop + merger_idx_2
-                        
-                        p1 = data_file[final_dt_1, :]
-                        p2 = data_file[final_dt_2, :]
-                        kepler_elements, binary = self.extract_orbital_parameters(p1, p2)
-                        eccentricity = kepler_elements[3]
-                        
-                        if eccentricity < 0.99:
-                            offset = sim_dt
-                        if eccentricity < 0.999:
-                            offset = min(1000, sim_dt)
-                        else:
-                            offset = min(50, sim_dt)
-                        
-                        for dt in range(offset):
-                            merger1_row = (sim_dt-offset+dt)*sim_pop + merger_idx_1
-                            merger2_row = (sim_dt-offset+dt)*sim_pop + merger_idx_2
-                            array_idx = sim_pop // 5 - 2
-                            
-                            p1 = data_file[merger1_row, :]
-                            p2 = data_file[merger2_row, :]
-                            kepler_elements, binary = self.extract_orbital_parameters(p1, p2)
-                            semimajor = kepler_elements[2]
-                            eccentricity = kepler_elements[3]
-                            
-                            #GW calculations
-                            strain_val = gw_strain(semimajor, eccentricity, binary[0].mass, binary[1].mass)
-                            freq_val = gw_freq(semimajor, eccentricity, binary[0].mass, binary[1].mass).value_in(units.Hz)
-                            
-                            self.semi_major[array_idx].append(semimajor.value_in(units.au))
-                            self.eccentricity[array_idx].append(1 - eccentricity)
-                            self.GW_freq[array_idx].append(freq_val)
-                            self.GW_strain[array_idx].append(strain_val)
-                            self.merger_fno[array_idx].append(file_no)
+                    self.extract_merger_data(
+                        data_file, merger_idx_1, merger_idx_2, 
+                        sim_pop, sim_dt, array_idx, final_dt,
+                        file_no
+                    )
+
+    def extract_merger_data(self, data_file, merger_idx_1, merger_idx_2, 
+                            sim_pop, sim_dt, array_idx, final_dt, file_no
+                            ):
+        if (final_dt):
+            merger1_row = (sim_dt-1)*sim_pop + merger_idx_1
+            merger2_row = (sim_dt-1)*sim_pop + merger_idx_2
+            array_idx = sim_pop // 5 - 2
+            
+            p1 = data_file[merger1_row, :]
+            p2 = data_file[merger2_row, :]
+            kepler_elements, dummy = self.extract_orbital_parameters(p1, p2)
+            
+            self.data_storage['final_merger_sem'][array_idx].append(kepler_elements[2].value_in(units.au))
+            self.data_storage['final_merger_ecc'][array_idx].append(1-kepler_elements[3])
+            
+            
+            p1 = data_file[merger_idx_1, :]
+            p2 = data_file[merger_idx_2, :]
+            kepler_elements, dummy = self.extract_orbital_parameters(p1, p2)
+            
+            self.data_storage['initial_merger_sem'][array_idx].append(kepler_elements[2].value_in(units.au))
+            self.data_storage['initial_merger_ecc'][array_idx].append(1-kepler_elements[3])
         
+        else:
+            final_dt_1 = (sim_dt - 1)*sim_pop + merger_idx_1
+            final_dt_2 = (sim_dt - 1)*sim_pop + merger_idx_2
+            
+            p1 = data_file[final_dt_1, :]
+            p2 = data_file[final_dt_2, :]
+            kepler_elements, binary = self.extract_orbital_parameters(p1, p2)
+            eccentricity = kepler_elements[3]
+            
+            if eccentricity < 0.99:
+                offset = sim_dt
+            if eccentricity < 0.999:
+                offset = min(1000, sim_dt)
+            else:
+                offset = min(50, sim_dt)
+            
+            for dt in range(offset):
+                merger1_row = (sim_dt-offset+dt)*sim_pop + merger_idx_1
+                merger2_row = (sim_dt-offset+dt)*sim_pop + merger_idx_2
+                array_idx = sim_pop // 5 - 2
+                
+                p1 = data_file[merger1_row, :]
+                p2 = data_file[merger2_row, :]
+                kepler_elements, binary = self.extract_orbital_parameters(p1, p2)
+                semimajor = kepler_elements[2]
+                eccentricity = kepler_elements[3]
+                
+                #GW calculations
+                strain_val = gw_strain(semimajor, eccentricity, binary[0].mass, binary[1].mass)
+                freq_val = gw_freq(semimajor, eccentricity, binary[0].mass, binary[1].mass).value_in(units.Hz)
+                
+                self.data_storage['semi_major'][array_idx].append(semimajor.value_in(units.au))
+                self.data_storage['eccentricity'][array_idx].append(1 - eccentricity)
+                self.data_storage['GW_freq'][array_idx].append(freq_val)
+                self.data_storage['GW_strain'][array_idx].append(strain_val)
+                self.data_storage['merger_fno'][array_idx].append(file_no)
+                    
+    def ecc_sem_params(self):
+        """Plot the final semi-major and eccentricity of mergers"""
+        self.process_output_file(final_dt=True)
+        
+        data_arrays = [
+            ['initial_merger_sem', 'final_merger_sem'], 
+            ['initial_merger_ecc', 'final_merger_ecc']
+        ]
+        data_labels = [
+            [r"$\log_{10}a(t_0)$ [au]", r"$\log_{10}a(t_{\rm coll})$ [au]"],
+            [r"$\log_{10}(1-e(t_0))$", r"$\log_{10}(1-e(t_{\rm coll}))$"]
+        ]
+        file_name = ["evol_semi_major.png", "evol_eccentricity.png"]
+        
+        for df_keys, labels, fname in zip(data_arrays, data_labels, file_name):
+            fig = plt.figure(figsize=(8, 6))
+            gs = fig.add_gridspec(2, 2,  width_ratios=(4, 2), height_ratios=(2, 4),
+                                  left=0.1, right=0.9, bottom=0.1, top=0.9,
+                                  wspace=0.05, hspace=0.05)
+            ax = fig.add_subplot(gs[1, 0])
+            ax1 = fig.add_subplot(gs[0, 0], sharex=ax)
+            ax2 = fig.add_subplot(gs[1, 1], sharey=ax)
+            ax1.tick_params(axis="x", labelbottom=False)
+            ax2.tick_params(axis="y", labelleft=False)
+            
+            for ax_ in [ax, ax1, ax2]:
+                self.format_plot.tickers(ax)
+                
+            ax.set_xlabel(labels[0], fontsize=self.format_plot.font_size)
+            ax.set_ylabel(labels[1], fontsize=self.format_plot.font_size)
+            ax1.set_ylabel(r"$\rho/\rho_{\rm max}$", fontsize=self.format_plot.font_size)
+            ax2.set_xlabel(r"$\rho/\rho_{\rm max}$", fontsize=self.format_plot.font_size)
+            ax1.set_ylim(0, 1.02)
+            ax2.set_xlim(0, 1.02)
+            
+            init_data = self.data_storage[df_keys[0]]
+            final_data = self.data_storage[df_keys[1]]
+            for iteration, (init_df, final_df) in enumerate(zip(init_data, final_data)):
+                init_orb_param = np.array([item for item in init_df])
+                final_orb_param = np.array([item for item in final_df])
+                colour = self.format_plot.pop_colours[iteration]
+                
+                variable_vals, variable_pdf = self.format_plot.kde_maker(init_orb_param)
+                ax1.plot(np.log10(variable_vals), variable_pdf, color=colour)
+                ax1.fill_between(np.log10(variable_vals), variable_pdf, alpha=0.35, color=colour)
+    
+                variable_pdf, variable_vals = self.format_plot.kde_maker(final_orb_param)
+                ax2.plot(variable_vals, np.log10(variable_pdf), color=colour)
+                ax2.fill_betweenx(np.log10(variable_pdf), variable_vals, alpha=0.35, color=colour)
+    
+                ax.scatter(np.log10(init_orb_param), np.log10(final_orb_param), 
+                           color=colour, label=r"$N = $"+str(5*(iteration+2)),
+                           edgecolors="black")
+                
+            ax.legend(fontsize=self.format_plot.font_size)
+            plt.savefig(os.path.join("plotters", fname), dpi=300, bbox_inches='tight')
+            plt.clf()
+    
     def final_ecc_CDF(self):
-        self.extract_merger_parameters(final_dt=True)
+        self.process_output_file(final_dt=True)
         
         fig, ax = plt.subplots()
         ax.set_ylabel(r"$f_<$", fontsize=self.format_plot.font_size)
@@ -152,8 +239,8 @@ class Plotters(object):
         self.format_plot.tickers(ax)
         
         # Plot per population
-        for i, pop in enumerate(self.merger_ecc):
-            ecc = np.array([1-item for item in pop])
+        for i, pop in enumerate(self.data_storage['final_merger_ecc']):
+            ecc = np.array([item for item in pop])
             cdf_ecc_x, cdf_ecc_y = self.format_plot.cdf_maker(ecc)
             colour = self.cmap((i+3)/10)
             
@@ -161,7 +248,7 @@ class Plotters(object):
                     label=r"$N = $"+str(5*(i+2))
             )
                 
-        all_ecc = np.array([1-item for sublist in self.merger_ecc for item in sublist])
+        all_ecc = np.array([item for sublist in self.data_storage['final_merger_ecc'] for item in sublist])
         cdf_ecc_x, cdf_ecc_y = self.format_plot.cdf_maker(all_ecc)
         ax.plot(np.log10(cdf_ecc_x), cdf_ecc_y, color="black", linewidth=4, label="All")
                 
@@ -173,7 +260,7 @@ class Plotters(object):
        
     def frequency_strain(self):
         """Plot the frequency vs. strain diagram of mergers"""
-        self.extract_merger_parameters(final_dt=False)
+        self.process_output_file(final_dt=False)
         ecc_normalise = plt.Normalize(-8, 0)
         all_freq = [ ]
         all_strain = []
@@ -230,17 +317,17 @@ class Plotters(object):
             self.format_plot.tickers(ax_)
             
         for i in range(7):
-            freq = np.asarray(self.GW_freq[i])
-            strain = np.asarray(self.GW_strain[i])
-            ecc_vals = np.asarray(self.eccentricity[i])
+            freq = np.asarray(self.data_storage['GW_freq'][i])
+            strain = np.asarray(self.data_storage['GW_strain'][i])
+            ecc_vals = np.asarray(self.data_storage['eccentricity'][i])
             
-            for sim in np.unique(self.merger_fno[i]):
-                indices = np.where(np.array(self.merger_fno[i]) == sim)[0]
+            for sim in np.unique(self.data_storage['merger_fno'][i]):
+                indices = np.where(np.array(self.data_storage['merger_fno'][i]) == sim)[0]
                 ecc = np.log10(ecc_vals[indices])
                 edge_colour = edge_colors[i]
                 
                 ax.scatter(np.log10(freq[indices]), np.log10(strain[indices]), 
-                           c=ecc, norm=ecc_normalise, cmap=self.cmap, s=10,
+                           c=ecc, norm=ecc_normalise, cmap=self.cmap, s=20,
                            zorder=1
                            )
                 ax.plot(np.log10(freq[indices]), np.log10(strain[indices]), 
@@ -254,17 +341,13 @@ class Plotters(object):
             all_freq = np.concatenate((all_freq, freq), axis=None)
             all_strain = np.concatenate((all_strain, strain), axis=None)
             
-        kde = sm.nonparametric.KDEUnivariate(np.log10(all_freq))
-        kde.fit()
-        kde.density = kde.density/max(kde.density)
-        ax1.plot(kde.support, kde.density, color="black")
-        ax1.fill_between(kde.support, kde.density, alpha=0.4, color="black")
+        variable_pdf, variable_vals = self.format_plot.kde_maker(np.log10(all_freq))
+        ax1.plot(variable_pdf, variable_vals, color="black")
+        ax1.fill_between(variable_pdf, variable_vals, alpha=0.4, color="black")
         
-        kde = sm.nonparametric.KDEUnivariate(np.log10(all_strain))
-        kde.fit()
-        kde.density = kde.density/max(kde.density)
-        ax2.plot(kde.density, kde.support, color="black")
-        ax2.fill_between(kde.density, kde.support, alpha=0.4, color="black")
+        variable_vals, variable_pdf = self.format_plot.kde_maker(np.log10(all_strain))
+        ax2.plot(variable_vals, variable_pdf, color="black")
+        ax2.fill_between(variable_vals, variable_pdf, alpha=0.4, color="black")
             
         # Eccentricity colours
         color_bar = plt.colorbar(sm_colour, ax=ax3, pad=0.5)
@@ -281,12 +364,11 @@ class Plotters(object):
         ax.set_ylim(-25.9, -17.02)
         ax1.set_ylim(0, 1.02)
         ax2.set_ylim(-25.9, -17.02)
-        ax.set_xlim(-3.98, 0.2)
-        ax1.set_xlim(-3.98, 0.2)
+        ax.set_xlim(-3.98, -0.3)
+        ax1.set_xlim(-3.98, -0.3)
         ax2.set_xlim(0, 1.02)
         plt.savefig("plotters/GW_strain_freq.png", dpi=300, bbox_inches='tight')
         plt.clf()
-        STOP
          
     def tGW_comparison(self):
         """Plot the comparison between the analytical Peters and BrutusPN tGW"""
@@ -352,12 +434,92 @@ class Plotters(object):
                 [np.log10(merger_lower), np.log10(merger_higher)], color="black"
                 )
         ax.axhline(0, color="black", linestyle=":")
-        plt.show()
+        plt.savefig(os.path.join("plotters", "tGW_pred_vs_sim.png"), dpi=300, bbox_inches='tight')
 
         print(f"Initial conditions had {Nhyperbolic} hyperbolic mergers")
         print(f"Initial conditions had {nhead} head-ons mergers")
         
+    def track_orbital_deviation(self):
+        """Track the evolution of a merging binary's orbital parameters"""
+        file_no = 0
+        for data_file, output in zip(self.env_files, self.log_files):
+            if os.path.getsize(output) > 0:
+                file_no += 1
+                with open(output, 'r') as df:
+                    data_file = np.loadtxt(data_file)
+                    data_values = df.readlines()
+                    
+                    merger_idx = data_values[-1].split("=")[-1]
+                    merger_idx_1 = merger_idx[1]
+                    merger_idx_2 = merger_idx[3:]
+                    
+                    if merger_idx_1 == "-" or merger_idx_2 == "-":
+                        print(f"Curious? No mergers {output}")
+                        continue
+                    
+                    merger_idx_1 = int(merger_idx_1)
+                    merger_idx_2 = int(merger_idx_2)
+                    
+                    sim_pop = int(data_values[0].split("=")[1])
+                    sim_dt = int(len(data_file) / sim_pop)
+                    array_idx = sim_pop // 5 - 2
+                    
+                    p1 = data_file[merger_idx_1, :]
+                    p2 = data_file[merger_idx_2, :]
+                    kepler_elements, binary = self.extract_orbital_parameters(p1, p2)
+                    semimajor = kepler_elements[2]
+                    eccentricity = kepler_elements[3]
+                    
+                    pred_sem, pred_ecc = peters_orb_param_evolution(semimajor, 
+                                                                    eccentricity, 
+                                                                    binary[0].mass, 
+                                                                    binary[1].mass,
+                                                                    self.dt, sim_dt
+                                                                    )
+                    
+                    sim_dt = min(sim_dt, len(pred_sem))
+                    sim_sem = [ ]
+                    sim_ecc = [ ]
+                    for dt in range(sim_dt):
+                        merger1_row = dt*sim_pop + merger_idx_1
+                        merger2_row = dt*sim_pop + merger_idx_2
+                        
+                        p1 = data_file[merger1_row, :]
+                        p2 = data_file[merger2_row, :]
+                        kepler_elements, binary = self.extract_orbital_parameters(p1, p2)
+                        semimajor = kepler_elements[2]
+                        eccentricity = kepler_elements[3]
+                        
+                        sim_sem.append(semimajor.value_in(units.au))
+                        sim_ecc.append(1 - eccentricity)
+                    
+                    self.data_storage['semi_major_deviation'][array_idx].append([abs(i-j)/i for i, j in zip(pred_sem, sim_sem)])
+                    self.data_storage['eccentricity_deviation'][array_idx].append([abs((i-j)/i) for i, j in zip(pred_ecc, sim_ecc)])
+                    
+                    if not self.data_storage['maximum_iterations'][array_idx]:
+                        self.data_storage['maximum_iterations'][array_idx] = 0 * self.dt.value_in(units.yr)
+                    curr_max_dt = self.data_storage['maximum_iterations'][array_idx]
+                    self.data_storage['maximum_iterations'][array_idx] = max(sim_dt * self.dt.value_in(units.yr), curr_max_dt)
+        
+        for i, (semi_major, eccentric) in enumerate(zip(self.data_storage['semi_major_deviation'], self.data_storage['eccentricity_deviation'])):
+            sim_dt_normalise = plt.Normalize(0, self.data_storage['maximum_iterations'][i])
+            for indiv_run_sem, indiv_run_ecc in zip(semi_major, eccentric):
+                if len(indiv_run_ecc) > 0:
+                    sim_time = np.linspace(0, len(indiv_run_sem), len(indiv_run_sem))
+                    sim_time *= self.dt.value_in(units.yr)
+                    plt.scatter(np.log10(indiv_run_sem), np.log10(indiv_run_ecc), 
+                                c=sim_time, norm=sim_dt_normalise, cmap=self.cmap)
+                    plt.scatter(np.log10(indiv_run_sem[-1]), np.log10(indiv_run_ecc[-1]), 
+                                marker="X", color="black")
+            plt.xlabel(r"$(a_{\rm Peters} - a_{\rm BrutusPN})/a_{\rm Peters}$")
+            plt.ylabel(r"$(e_{\rm Peters} - e_{\rm BrutusPN})/e_{\rm Peters}$")
+            plt.text(0, 0, str(i*(5+2)))
+            plt.show()
+
 dd = Plotters()
+dd.track_orbital_deviation()
+STOP
 # dd.final_ecc_CDF()
 # dd.tGW_comparison()
-dd.frequency_strain()
+# dd.frequency_strain()
+# dd.ecc_sem_params()
