@@ -16,6 +16,7 @@ public:
     array<mpreal, 3> r;
     array<mpreal, 3> v;
     array<mpreal, 3> a;
+    array<mpreal, 3> jerk;
     array<mpreal, 3> w;
     
     array<mpreal, 3> vp;

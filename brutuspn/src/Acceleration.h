@@ -53,9 +53,10 @@ public:
     void get_bary(); // Not really necessary i guess
     
     void calcAcceleration_dt();
-    void calcAcceleration();
+    void calcAcceleration(mpreal dt);
     
     vector<array<mpreal, 3>> getAcceleration();
+    vector<array<mpreal, 3>> getJerk();
 };
 
 #endif

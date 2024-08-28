@@ -10,6 +10,7 @@ class Bulirsch_Stoer {
   int n_max, k_max;
 
   vector< vector<mpreal> > x_sample, y_sample, z_sample, vx_sample, vy_sample, vz_sample;
+  vector< vector<mpreal> > ax_sample, ay_sample, az_sample, jx_sample, jy_sample, jz_sample;
 
   public:
 

@@ -40,8 +40,6 @@ class Brutus {
   void reverse_velocities();
 
   mpreal get_t();
-  vector<mpreal> get_data();
-  vector<double> get_data_double();
   vector<string> get_data_string();
   
   mpreal get_energy();

@@ -2,7 +2,7 @@
 
 # USER PARAMETERS
 # Name of initial condition
-INITCOND="Nbh_10_run_1"
+INITCOND="Nbh_10_run_9"
 
 # Start time in kyr
 STARTTIME=0

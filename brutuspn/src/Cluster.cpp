@@ -90,11 +90,11 @@ void Cluster::updateVelocities(mpreal dt) {
 // Step the cluster using Auxiliary Vector Algorithm by Mikkola & Hellstrom
 void Cluster::step(mpreal &dt) {
     updatePositions(dt);
-    calcAcceleration();
+    calcAcceleration(dt);
     updateAuxiliary(dt);
-    calcAcceleration();
+    calcAcceleration(dt);
     updateVelocities(dt);
-    calcAcceleration();
+    calcAcceleration(dt);
     updateAuxiliary2(dt);
     updatePositions(dt);
 }
