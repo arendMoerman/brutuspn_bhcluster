@@ -118,25 +118,25 @@ void Brutus::reverse_velocities() {
 mpreal Brutus::get_t() {
   return t;
 }
-vector<mpreal> Brutus::get_data() {
-  return data;
-}
-vector<double> Brutus::get_data_double() {
-  int N = data.size()/7;
-  vector<double> v(7*N, 0);
-  for(int i=0; i<N; i++) {
-    for(int j=0; j<7; j++) {
-      v[i*7+j] = data[i*7+j].toDouble();
-    }
-  }
-  return v;
-}
+
 vector<string> Brutus::get_data_string() {
   int N = data.size()/7;
-  vector<string> v(7*N, "0");
+  vector<string> v(13*N, "0");
+  
+  vector<array<mpreal, 3>> acc;
+  vector<array<mpreal, 3>> jerk;
+
+  acc = cl.getAcceleration();   
+  jerk = cl.getJerk();   
+
   for(int i=0; i<N; i++) {
     for(int j=0; j<7; j++) {
-      v[i*7+j] = data[i*7+j].toString();
+      v[i*13+j] = data[i*7+j].toString();
+    }
+    
+    for(int j=0; j<3; j++) {
+      v[i*13+7+j] = acc[i][j].toString();
+      v[i*13+10+j] = jerk[i][j].toString();
     }
   }
   return v;

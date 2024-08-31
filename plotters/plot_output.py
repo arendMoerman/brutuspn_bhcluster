@@ -14,7 +14,7 @@ def PlotOutput():
     Arr = np.loadtxt(f"./outputs/{args.name}.out")
     enr = np.loadtxt(f"./outputs/{args.name}.energies")
     
-    N = int(Arr[0,7])
+    N = int(Arr[0,-1])
     T = int(len(Arr) / N)
     m = []
     mtot = 0
@@ -24,7 +24,7 @@ def PlotOutput():
         m.append(Arr[i,0])
 
     Arr = np.delete(Arr, 0, 1)
-    Arr = np.delete(Arr, 6, 1)
+    Arr = np.delete(Arr, -1, 1)
     
     idx_x = 0
     idx_y = 1

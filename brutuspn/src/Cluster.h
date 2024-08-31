@@ -33,6 +33,8 @@ public:
     vector<double> get_data_double();
     vector<mpreal> get_data();   
     
+    array<mpreal, 3> a0;
+    
     void setw0();
 
     void updatePositions(mpreal dt);

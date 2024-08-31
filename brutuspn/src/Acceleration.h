@@ -56,6 +56,7 @@ public:
     void calcAcceleration();
     
     vector<array<mpreal, 3>> getAcceleration();
+    vector<array<mpreal, 3>> getJerk();
 };
 
 #endif

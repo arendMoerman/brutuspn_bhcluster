@@ -12,7 +12,11 @@ fi
 
 # USER PARAMETERS
 # Name of initial condition
+<<<<<<< HEAD
 INITCOND="Nbh_${CLUSTERPOP}_run_"${RUNIDX}
+=======
+INITCOND="Nbh_10_run_9"
+>>>>>>> upstream/main
 
 # Start time in kyr
 STARTTIME=0

@@ -248,7 +248,7 @@ void Acceleration::calcAcceleration() {
     array<mpreal, 3> dv;
     array<mpreal, 3> da;
     mpreal dr2 = "0";
-
+    
     for (vector<Star>::iterator si = s.begin(); si != s.end(); ++si) {
         si->a.fill("0");
     }
@@ -299,6 +299,7 @@ void Acceleration::calcAcceleration() {
 
 // Here, the acceleration calculated at the very beginning of a new time step.
 // The initial stepsize is calculated here
+// Note that, because this step is only used for getting an initial dt, no jerk is calculated here
 void Acceleration::calcAcceleration_dt() {
     array<mpreal, 3> vi;
     array<mpreal, 3> dr;
@@ -309,9 +310,7 @@ void Acceleration::calcAcceleration_dt() {
 
     dt = "1e100";
     mpreal mydt = "0";
-    
-    int N = s.size();
-    
+
     for (vector<Star>::iterator si = s.begin(); si != s.end(); ++si) {
         si->a.fill("0");
     }
@@ -364,13 +363,18 @@ void Acceleration::calcAcceleration_dt() {
     dt = sqrt(sqrt(dt)); //pow(dt, "0.25");
 }
 
-// Toy routine for getting acceleration output
 vector<array<mpreal, 3>> Acceleration::getAcceleration() {
-    int N = s.size();
-    
     vector<array<mpreal, 3>> ai;
     for (vector<Star>::iterator si = s.begin(); si != s.end(); ++si) {
         ai.push_back(si->a);
     }
     return ai;
+}
+
+vector<array<mpreal, 3>> Acceleration::getJerk() {
+    vector<array<mpreal, 3>> jerki;
+    for (vector<Star>::iterator si = s.begin(); si != s.end(); ++si) {
+        jerki.push_back(si->jerk);
+    }
+    return jerki;
 }

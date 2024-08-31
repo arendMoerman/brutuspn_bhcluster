@@ -22,13 +22,15 @@ using namespace mpfr;
 #include "Brutus.h"
 
 void MyOut(int &N, vector<string> &data, ofstream &out, vector<mpreal> &mrvt) {
-    int scale_idx;
+    mpreal factor;
     for(int i=0; i<N; i++) {
-        scale_idx = 0;
-        for(int j=0; j<7; j++) {
-            if(j > 0) {scale_idx=1;}
-            if(j > 3) {scale_idx=2;}
-            out << data[i*7+j]*mrvt[scale_idx] << " ";
+        factor = mrvt[0]; // Write mass
+        for(int j=0; j<13; j++) {
+            if(j > 0) {factor = mrvt[1];} // Write positions
+            if(j > 3) {factor = mrvt[2];} // Write velocities
+            if(j > 6) {factor = mrvt[2]/mrvt[3];} // Write accelerations
+            if(j > 9) {factor = mrvt[2]/mrvt[3]/mrvt[3];} // Write jerk
+            out << data[i*13+j] * factor << " ";
         }
         out << N << endl;
     }
@@ -119,7 +121,7 @@ int main(int argc, char* argv[]) {
   cerr << "Simulation started... " << endl;
 
   vector<string> sdata = brutus.get_data_string();
-  vector<mpreal> mdata = brutus.get_data();
+  //vector<mpreal> mdata = brutus.get_data();
 
   mpreal t0 = (mpreal)atof(argv[2]);
   //data_handler.print(t0, N, t_cpu, data0);
@@ -164,7 +166,7 @@ int main(int argc, char* argv[]) {
     t_cpu += timer.get();
 
     sdata = brutus.get_data_string();
-    mdata = brutus.get_data();
+    //mdata = brutus.get_data();
     MyOut(N, sdata, MyOutfile, mrvt);
     Energyfile << std::setprecision(numDigits) << t*mrvt[3] << " " << brutus.get_energy() << endl;
     
@@ -193,7 +195,7 @@ int main(int argc, char* argv[]) {
   //Enerfile.close();
 
   sdata = brutus.get_data_string();
-  mdata = brutus.get_data();
+  //mdata = brutus.get_data();
   //data_handler.print(t, N, t_cpu, mdata);
 
   /////////////////////////////////////////////////////////

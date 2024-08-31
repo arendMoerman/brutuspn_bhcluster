@@ -188,6 +188,7 @@ void Bulirsch_Stoer::extrapol(Cluster &cl_exp, vector<mpreal> &dt, vector<Cluste
     vx_sample[i].push_back( c[M-1].s[i].v[0] );
     vy_sample[i].push_back( c[M-1].s[i].v[1] );
     vz_sample[i].push_back( c[M-1].s[i].v[2] );
+    
 
     cl_exp.s[i].r[0] = extrapolate(dt, x_sample[i]);
     cl_exp.s[i].r[1] = extrapolate(dt, y_sample[i]);
@@ -195,6 +196,14 @@ void Bulirsch_Stoer::extrapol(Cluster &cl_exp, vector<mpreal> &dt, vector<Cluste
     cl_exp.s[i].v[0] = extrapolate(dt, vx_sample[i]);
     cl_exp.s[i].v[1] = extrapolate(dt, vy_sample[i]);
     cl_exp.s[i].v[2] = extrapolate(dt, vz_sample[i]);
+    
+    cl_exp.s[i].a[0] = c[M-1].s[i].a[0];
+    cl_exp.s[i].a[1] = c[M-1].s[i].a[1];
+    cl_exp.s[i].a[2] = c[M-1].s[i].a[2];
+    cl_exp.s[i].jerk[0] = c[M-1].s[i].jerk[0];
+    cl_exp.s[i].jerk[1] = c[M-1].s[i].jerk[1];
+    cl_exp.s[i].jerk[2] = c[M-1].s[i].jerk[2];
+    //cout << c[M-1].s[i].jerk[2] << endl;
   }
 }
 
