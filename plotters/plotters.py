@@ -487,14 +487,14 @@ class Plotters(object):
                         p1 = data_file[merger1_row, :]
                         p2 = data_file[merger2_row, :]
                         kepler_elements, binary = self.extract_orbital_parameters(p1, p2)
-                        semimajor = kepler_elements[2]
+                        semimajor = abs(kepler_elements[2])
                         eccentricity = kepler_elements[3]
                         
                         sim_sem.append(semimajor.value_in(units.au))
-                        sim_ecc.append(1 - eccentricity)
+                        sim_ecc.append(eccentricity)
                     
-                    self.data_storage['semi_major_deviation'][array_idx].append([abs(i-j)/i for i, j in zip(pred_sem, sim_sem)])
-                    self.data_storage['eccentricity_deviation'][array_idx].append([abs((i-j)/i) for i, j in zip(pred_ecc, sim_ecc)])
+                    self.data_storage['semi_major_deviation'][array_idx].append([(i-j)/i for i, j in zip(pred_sem, sim_sem)])
+                    self.data_storage['eccentricity_deviation'][array_idx].append([(i-j)/i for i, j in zip(pred_ecc, sim_ecc)])
                     
                     if not self.data_storage['maximum_iterations'][array_idx]:
                         self.data_storage['maximum_iterations'][array_idx] = 0 * self.dt.value_in(units.yr)
@@ -508,12 +508,13 @@ class Plotters(object):
                     sim_time = np.linspace(0, len(indiv_run_sem), len(indiv_run_sem))
                     sim_time *= self.dt.value_in(units.yr)
                     plt.scatter(np.log10(indiv_run_sem), np.log10(indiv_run_ecc), 
-                                c=sim_time, norm=sim_dt_normalise, cmap=self.cmap)
+                                c=sim_time, norm=sim_dt_normalise, cmap=self.cmap,
+                                s=10)
                     plt.scatter(np.log10(indiv_run_sem[-1]), np.log10(indiv_run_ecc[-1]), 
-                                marker="X", color="black")
-            plt.xlabel(r"$(a_{\rm Peters} - a_{\rm BrutusPN})/a_{\rm Peters}$")
-            plt.ylabel(r"$(e_{\rm Peters} - e_{\rm BrutusPN})/e_{\rm Peters}$")
-            plt.text(0, 0, str(i*(5+2)))
+                                marker="X", color="black", s=30)
+                    plt.scatter(np.log10(indiv_run_sem[0]), np.log10(indiv_run_ecc[0]), color="red", s=30)
+            plt.xlabel(r"$(a_{\rm Peters}/a_{\rm BrutusPN})$")#/a_{\rm Peters}$")
+            plt.ylabel(r"$(e_{\rm Peters}/e_{\rm BrutusPN})$")#/e_{\rm Peters}$")
             plt.show()
 
 dd = Plotters()

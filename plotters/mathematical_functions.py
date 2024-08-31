@@ -156,7 +156,7 @@ def peters_orb_param_evolution(semi_major, eccentricity, mass1, mass2, dt, sim_l
         and iteration < sim_len:
             if not (predicted_sem_evol and predicted_ecc_evol):
                 predicted_sem_evol.append(semi_major.value_in(units.au))
-                predicted_ecc_evol.append(1-eccentricity)
+                predicted_ecc_evol.append(eccentricity)
                 
             else:
                 coefficient = (constants.G**3*mass1*mass2*system_mass)/(constants.c**5)
@@ -169,8 +169,8 @@ def peters_orb_param_evolution(semi_major, eccentricity, mass1, mass2, dt, sim_l
                 eccentricity += de*dt
                 rperi = semi_major*(1-eccentricity)
                 
-                predicted_sem_evol.append(semi_major.value_in(units.au))
-                predicted_ecc_evol.append(1-eccentricity)
+                predicted_sem_evol.append(abs(semi_major).value_in(units.au))
+                predicted_ecc_evol.append(eccentricity)
         
             iteration += 1
             
