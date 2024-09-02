@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from natsort import natsorted
 import numpy as np
 import os
-import statsmodels.api as sm
+from scipy import stats
 
 from amuse.ext.orbital_elements import orbital_elements_from_binary
 from amuse.lab import units, constants, Particles
@@ -184,51 +184,43 @@ class Plotters(object):
             [r"$\log_{10}a(t_0)$ [au]", r"$\log_{10}a(t_{\rm coll})$ [au]"],
             [r"$\log_{10}(1-e(t_0))$", r"$\log_{10}(1-e(t_{\rm coll}))$"]
         ]
-        file_name = ["evol_semi_major.png", "evol_eccentricity.png"]
+        file_name = ["evol_semi_major", "evol_eccentricity"]
         
         for df_keys, labels, fname in zip(data_arrays, data_labels, file_name):
-            fig = plt.figure(figsize=(8, 6))
-            gs = fig.add_gridspec(2, 2,  width_ratios=(4, 2), height_ratios=(2, 4),
-                                  left=0.1, right=0.9, bottom=0.1, top=0.9,
-                                  wspace=0.05, hspace=0.05)
-            ax = fig.add_subplot(gs[1, 0])
-            ax1 = fig.add_subplot(gs[0, 0], sharex=ax)
-            ax2 = fig.add_subplot(gs[1, 1], sharey=ax)
-            ax1.tick_params(axis="x", labelbottom=False)
-            ax2.tick_params(axis="y", labelleft=False)
-            
-            for ax_ in [ax, ax1, ax2]:
-                self.format_plot.tickers(ax)
-                
-            ax.set_xlabel(labels[0], fontsize=self.format_plot.font_size)
-            ax.set_ylabel(labels[1], fontsize=self.format_plot.font_size)
-            ax1.set_ylabel(r"$\rho/\rho_{\rm max}$", fontsize=self.format_plot.font_size)
-            ax2.set_xlabel(r"$\rho/\rho_{\rm max}$", fontsize=self.format_plot.font_size)
-            ax1.set_ylim(0, 1.02)
-            ax2.set_xlim(0, 1.02)
             
             init_data = self.data_storage[df_keys[0]]
             final_data = self.data_storage[df_keys[1]]
             for iteration, (init_df, final_df) in enumerate(zip(init_data, final_data)):
+                pop = 5*(iteration+2)
                 init_orb_param = np.array([item for item in init_df])
                 final_orb_param = np.array([item for item in final_df])
                 colour = self.format_plot.pop_colours[iteration]
+
+                xvals = np.log10(init_orb_param)
+                yvals = np.log10(final_orb_param)
+                values = np.vstack([xvals, yvals])
+                xx, yy = np.mgrid[xvals.min():xvals.max():300j, 
+                                  yvals.min():yvals.max():300j
+                                  ]
+                positions = np.vstack([xx.ravel(), yy.ravel()])
+                kernel = stats.gaussian_kde(values, bw_method = "silverman")
+                f = np.reshape(kernel(positions).T, xx.shape)
                 
-                variable_vals, variable_pdf = self.format_plot.kde_maker(init_orb_param)
-                ax1.plot(np.log10(variable_vals), variable_pdf, color=colour)
-                ax1.fill_between(np.log10(variable_vals), variable_pdf, alpha=0.35, color=colour)
-    
-                variable_pdf, variable_vals = self.format_plot.kde_maker(final_orb_param)
-                ax2.plot(variable_vals, np.log10(variable_pdf), color=colour)
-                ax2.fill_betweenx(np.log10(variable_pdf), variable_vals, alpha=0.35, color=colour)
-    
+                fig, ax = plt.subplots()
+                ax.set_xlabel(labels[0], fontsize=self.format_plot.font_size)
+                ax.set_ylabel(labels[1], fontsize=self.format_plot.font_size)
+                self.format_plot.tickers(ax)
+                
+                cfset = ax.contourf(xx, yy, f, cmap="Blues", levels = 7, zorder = 1)
+                cset = ax.contour(xx, yy, f, colors = "k", levels = 7, zorder = 2)
+                ax.clabel(cset, inline=1, fontsize=10)
                 ax.scatter(np.log10(init_orb_param), np.log10(final_orb_param), 
-                           color=colour, label=r"$N = $"+str(5*(iteration+2)),
+                           color=colour, label=r"$N = $"+str(pop),
                            edgecolors="black")
-                
-            ax.legend(fontsize=self.format_plot.font_size)
-            plt.savefig(os.path.join("plotters", fname), dpi=300, bbox_inches='tight')
-            plt.clf()
+                ax.legend(fontsize=self.format_plot.font_size)
+                plt.savefig(os.path.join("plotters", fname+str(pop)+".png"), 
+                            dpi=300, bbox_inches='tight')
+                plt.clf()
     
     def final_ecc_CDF(self):
         self.process_output_file(final_dt=True)
@@ -493,8 +485,8 @@ class Plotters(object):
                         sim_sem.append(semimajor.value_in(units.au))
                         sim_ecc.append(eccentricity)
                     
-                    self.data_storage['semi_major_deviation'][array_idx].append([(i-j)/i for i, j in zip(pred_sem, sim_sem)])
-                    self.data_storage['eccentricity_deviation'][array_idx].append([(i-j)/i for i, j in zip(pred_ecc, sim_ecc)])
+                    self.data_storage['semi_major_deviation'][array_idx].append([j/i for i, j in zip(pred_sem, sim_sem)])
+                    self.data_storage['eccentricity_deviation'][array_idx].append([j/i for i, j in zip(pred_ecc, sim_ecc)])
                     
                     if not self.data_storage['maximum_iterations'][array_idx]:
                         self.data_storage['maximum_iterations'][array_idx] = 0 * self.dt.value_in(units.yr)
@@ -502,25 +494,41 @@ class Plotters(object):
                     self.data_storage['maximum_iterations'][array_idx] = max(sim_dt * self.dt.value_in(units.yr), curr_max_dt)
         
         for i, (semi_major, eccentric) in enumerate(zip(self.data_storage['semi_major_deviation'], self.data_storage['eccentricity_deviation'])):
+            
             sim_dt_normalise = plt.Normalize(0, self.data_storage['maximum_iterations'][i])
+            fig, ax = plt.subplots()
+            
             for indiv_run_sem, indiv_run_ecc in zip(semi_major, eccentric):
                 if len(indiv_run_ecc) > 0:
                     sim_time = np.linspace(0, len(indiv_run_sem), len(indiv_run_sem))
                     sim_time *= self.dt.value_in(units.yr)
-                    plt.scatter(np.log10(indiv_run_sem), np.log10(indiv_run_ecc), 
+                    ax.scatter(np.log10(indiv_run_sem), np.log10(indiv_run_ecc), 
                                 c=sim_time, norm=sim_dt_normalise, cmap=self.cmap,
-                                s=10)
-                    plt.scatter(np.log10(indiv_run_sem[-1]), np.log10(indiv_run_ecc[-1]), 
-                                marker="X", color="black", s=30)
-                    plt.scatter(np.log10(indiv_run_sem[0]), np.log10(indiv_run_ecc[0]), color="red", s=30)
-            plt.xlabel(r"$(a_{\rm Peters}/a_{\rm BrutusPN})$")#/a_{\rm Peters}$")
-            plt.ylabel(r"$(e_{\rm Peters}/e_{\rm BrutusPN})$")#/e_{\rm Peters}$")
-            plt.show()
+                                s=20, zorder=2)
+                    ax.scatter(np.log10(indiv_run_sem[-1]), np.log10(indiv_run_ecc[-1]), 
+                                marker="X", color="red", s=70, zorder=3)
+                    ax.scatter(np.log10(indiv_run_sem[0]), np.log10(indiv_run_ecc[0]), 
+                               color="red", s=30)
+                    
+            ax.axhline(0, color="black", linestyle="--", zorder=0)
+            ax.axvline(0, color="black", linestyle="--", zorder=0)
+            
+            xmin, xmax = ax.get_xlim()
+            ymin, ymax = ax.get_ylim()
+            """
+            ax.text(0.1*xmax, 0.9*ymax, r"$e_{\rm BrutusPN} > e_{\rm Peters}$ \n $a_{\rm BrutusPN} > a_{\rm Peters}$",)
+            ax.text(0.1*xmin, 0.9*ymax, r"$e_{\rm BrutusPN} > e_{\rm Peters}$ \n $a_{\rm BrutusPN} < a_{\rm Peters}$",)
+            ax.text(0.1*xmax, 0.8*ymin, r"$e_{\rm BrutusPN} < e_{\rm Peters}$ \n $a_{\rm BrutusPN} > a_{\rm Peters}$",)
+            ax.text(0.1*xmin, 0.8*ymin, r"$e_{\rm BrutusPN} < e_{\rm Peters}$ \n $a_{\rm BrutusPN} < a_{\rm Peters}$",)
+            """
+            ax.set_xlabel(r"$a_{\rm BrutusPN}/a_{\rm Peters}$")#/a_{\rm Peters}$")
+            ax.set_ylabel(r"$e_{\rm BrutusPN})/e_{\rm Peters}$")#/e_{\rm Peters}$")
+            plt.savefig(os.path.join("plotters", f"param_diff_{str(5*(2+i))}.png"), dpi=300, bbox_inches='tight')
+            plt.clf()
 
 dd = Plotters()
-dd.track_orbital_deviation()
-STOP
 # dd.final_ecc_CDF()
 # dd.tGW_comparison()
 # dd.frequency_strain()
 # dd.ecc_sem_params()
+dd.track_orbital_deviation()

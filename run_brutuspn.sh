@@ -18,7 +18,7 @@ INITCOND="Nbh_${CLUSTERPOP}_run_"${RUNIDX}
 STARTTIME=0
 
 # Endtime in kyr
-ENDTTIME=5
+ENDTTIME=50
 
 # Snapshot interval in kyr
 DTSNAP=0.0001
