@@ -28,8 +28,8 @@ void MyOut(int &N, vector<string> &data, ofstream &out, vector<mpreal> &mrvt) {
         for(int j=0; j<13; j++) {
             if(j > 0) {factor = mrvt[1];} // Write positions
             if(j > 3) {factor = mrvt[2];} // Write velocities
-            if(j > 6) {factor = mrvt[2]/mrvt[3];} // Write accelerations
-            if(j > 9) {factor = mrvt[2]/mrvt[3]/mrvt[3];} // Write jerk
+            if(j > 6) {factor = mrvt[2]/mrvt[4];} // Write accelerations
+            if(j > 9) {factor = mrvt[2]/mrvt[4]/mrvt[4];} // Write jerk
             out << data[i*13+j] * factor << " ";
         }
         out << N << endl;
@@ -56,6 +56,9 @@ int main(int argc, char* argv[]) {
       }
   }
   inFile.close();
+
+  // Also add time scaling in seconds at end of mrvt vector, for acc and jerk scaling
+  mrvt.push_back(mrvt[3] * 1000 * 365 * 24 * 60 * 60);
 
   string outdir = "./outputs/";
 
