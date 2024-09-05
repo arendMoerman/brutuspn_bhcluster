@@ -1,14 +1,24 @@
 #!/bin/bash
 
+#Prompt in case not added as argument
+if [ -z "$1" ]
+then
+    read -p "Enter cluster population: " CLUSTERPOP
+    read -p "Enter run index:  " RUNIDX
+else
+    CLUSTERPOP=$1
+    RUNIDX=$2
+fi
+
 # USER PARAMETERS
 # Name of initial condition
-INITCOND="Nbh_10_run_9"
+INITCOND="Nbh_${CLUSTERPOP}_run_"${RUNIDX}
 
 # Start time in kyr
 STARTTIME=0
 
 # Endtime in kyr
-ENDTTIME=5
+ENDTTIME=50
 
 # Snapshot interval in kyr
 DTSNAP=0.0001
@@ -36,8 +46,20 @@ NMAX=64
 # Location of initial condition to run
 INITLOC="./brutuspn/inputs/"${INITCOND}".txt.in"
 
+if [ ! -f "$INITLOC" ]
+then
+	echo "Error: Initial condition doesn't exist"
+	exit;
+fi
+
 # Output location of simulation. Automatically placed in ./outputs/, default is same name is init cond.
 OUTFILE=${INITCOND}
+OUTDIR="./outputs/${INITCOND}.energies"
+if [ -f "$OUTDIR" ]
+then
+	echo "Error: Simulation already exists"
+	exit;
+fi
 
 # Read first line of inital condition to obtain number of bodies in simulation
 LINE0=($(head -n 1 ${INITLOC}))
@@ -49,5 +71,6 @@ NBODIES=${LINE0[1]}
 MODE="file"
 echo "Running initial condition:" ${INITLOC} ${NBODIES}
 
-${EXEC} ${OUTFILE} ${STARTTIME} ${ENDTTIME} ${DTSNAP} ${ETA} ${EPS} ${LW} ${NMAX} ${NBODIES} ${RMERGE} ${MODE} ${INITLOC} 
+${EXEC} ${OUTFILE} ${STARTTIME} ${ENDTTIME} ${DTSNAP} ${ETA} ${EPS} ${LW} ${NMAX} ${NBODIES} ${RMERGE} ${MODE} ${INITLOC} &
 
+done

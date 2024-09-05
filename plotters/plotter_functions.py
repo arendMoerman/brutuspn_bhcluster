@@ -1,0 +1,54 @@
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
+import numpy as np
+import statsmodels.api as sm
+
+
+class PlotterSetup(object):
+    def __init__(self):
+        plt.rcParams["font.family"] = "Times New Roman"
+        plt.rcParams["mathtext.fontset"] = "cm"
+        self.font_size = 14
+        self.tick_size = 14
+        
+        left = .45
+        width = .5
+        bottom = .58
+        height = .5
+        self.right = left + width
+        self.top = bottom + height
+        
+        self.pop_colours = ["red", "darkorange", "gold",
+                            "mediumturquoise", "dodgerblue",
+                            "blue", "purple"
+                            ]
+
+    def tickers(self, ax):
+        """Function to setup axis"""
+        ax.yaxis.set_ticks_position('both')
+        ax.xaxis.set_ticks_position('both')
+        ax.xaxis.set_minor_locator(mtick.AutoMinorLocator())
+        ax.yaxis.set_minor_locator(mtick.AutoMinorLocator())
+
+        ax.tick_params(
+            axis="y", which='both', direction="in", 
+            labelsize=self.tick_size
+        )
+        ax.tick_params(
+            axis="x", which='both', direction="in", 
+            labelsize=self.tick_size
+        )
+        
+        return ax
+
+    def cdf_maker(self, data):
+        """Function to make a CDF of the data"""
+        x = np.sort(data)
+        y = np.linspace(0, 1, len(x))
+        return x, y
+    
+    def kde_maker(self, data):
+        """Function to make a KDE of the data"""
+        kde = sm.nonparametric.KDEUnivariate(data).fit()
+        kde.density /= kde.density.max()
+        return kde.support, kde.density

@@ -1,6 +1,6 @@
 ###################################################################
 # Adjust path to mpreal.h file
-MPRDIR  = /home/arend/Projects/Simulations/brutuspn_bhcluster/brutuspn/mpreal/
+MPRDIR  = brutuspn_bhcluster/brutuspn/mpreal/
 ###################################################################
 LIB     = ./lib/
 MPLIB   = ./mplib/

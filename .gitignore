@@ -19,3 +19,6 @@ outputs/*
 *.png
 
 brutuspn/*.par
+
+plotters/LISA_Curves/*
+plotters/SGWBProbe/*
