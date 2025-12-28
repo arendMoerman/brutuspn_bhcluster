@@ -24,7 +24,14 @@ class PlotterSetup(object):
                             ]
 
     def tickers(self, ax):
-        """Function to setup axis"""
+        """
+        Function to setup axis
+        
+        Args:
+            ax (object):  Axes object to format
+        Returns:
+            ax (object):  Re-formatted axes
+        """
         ax.yaxis.set_ticks_position('both')
         ax.xaxis.set_ticks_position('both')
         ax.xaxis.set_minor_locator(mtick.AutoMinorLocator())
@@ -42,13 +49,29 @@ class PlotterSetup(object):
         return ax
 
     def cdf_maker(self, data):
-        """Function to make a CDF of the data"""
+        """
+        Function to make a CDF of the data
+        
+        Args:
+            data (array):  The data to make the CDF of
+        Returns:
+            x (array):  The x-axis CDF data
+            y (array):  The y-axis CDF data
+        """
         x = np.sort(data)
         y = np.linspace(0, 1, len(x))
         return x, y
     
     def kde_maker(self, data):
-        """Function to make a KDE of the data"""
+        """
+        Function to make a KDE of the data
+        
+        Args:
+            data (array):  The data to make the KDE of
+        Returns:
+            x (array):  The x-axis KDE data
+            y (array):  The y-axis KDE data
+        """
         kde = sm.nonparametric.KDEUnivariate(data).fit()
         kde.density /= kde.density.max()
         return kde.support, kde.density

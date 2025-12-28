@@ -10,13 +10,30 @@ import numpy as np
 
 
 def gw_timescale(m1, m2, eccentricity, semimajor):
+    """
+    Function to calculate the gravitational wave timescale using Peters 1963 formula
+    
+    Args:
+        m1 (float): Mass of the primary object
+        m2 (float): Mass of the secondary object
+        eccentricity (float): Eccentricity of the binary
+        semimajor (float): Semi-major axis of the binary
+    Returns:
+        tgw (float): Gravitational wave inspiral time
+    """
     mu = (m1*m2)/(m1+m2)
-    coeff = (5*constants.c**5)/(256*constants.G**3)
-    tgw = coeff*(semimajor**4*(1-eccentricity**2)**(7./2.))/(mu*(m1+m2)**2)
+    coeff = (5.*constants.c**5.)/(256.*constants.G**3.)
+    tgw = coeff*(semimajor**4.*(1.-eccentricity**2.)**(7./2.))/(mu*(m1+m2)**2.)
     return tgw
 
 def store_data(new_particle, old_particle):
-    """Transfer data onto an AMUSE particle set"""
+    """
+    Transfer data onto an AMUSE particle set
+    
+    Args:
+        new_particle (object): New particle to store data
+        old_particle (object): Old particle to transfer data from
+    """
     new_particle.mass = old_particle[1]
     new_particle.x = old_particle[2][0]
     new_particle.y = old_particle[2][1]
@@ -48,10 +65,7 @@ for s in snapshots:
                 merge_param_file_name = "Final_Inspiral/Merger_Parameters/Nbh_{:}_run_{:}.txt".format(no_particles, run_no)
                 with open(IC_file_name, mode="w", newline="") as file:
                     brutus = [0, no_particles, 0]
-                    headers = ["key", "merger [Bool]", "mass [kg]", 
-                               "x [m]", "y [m]", "z [m]", 
-                               "vx [m/s]", "vy [m/s]", "vz [m/s]"
-                    ]
+                    headers = ["key", "merger [Bool]", "mass [kg]", "x [m]", "y [m]", "z [m]", "vx [m/s]", "vy [m/s]", "vz [m/s]"]
                     writer = csv.writer(file)
                     writer.writerow(brutus)
                     writer.writerow(headers)
@@ -125,6 +139,4 @@ for s in snapshots:
                     for line in lines:
                         file.write(line)
                         file.write('\n')
-                
-                #write_set_to_file(particles, "final_dt_N"+str(len(particles))+"_run"+str(run_no)+".amuse")
                 
